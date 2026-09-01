@@ -21,9 +21,9 @@ class BitacoraApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Bitácora de Redes',
+      title: 'BITÁCORA MÓVIL DE RED MULTIPLATAFORMA',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
       ),
       // Apunta a tu vista de login temporalmente
