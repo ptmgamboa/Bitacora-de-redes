@@ -19,32 +19,33 @@ Para ejecutar este proyecto en tu entorno local, sigue estos pasos:
 1. **Clonar el repositorio:**
    ```bash
    git clone [https://github.com/ptmgamboa/Bitacora-de-redes.git](https://github.com/ptmgamboa/Bitacora-de-redes.git)
-Entrar a la carpeta del proyecto:
+2. Entrar a la carpeta del proyecto:
 
  ```Bash
     cd Bitacora-de-redes
  ```
-Instalar las dependencias de Flutter:
+3. Instalar las dependencias de Flutter:
  ```Bash
     flutter pub get
  ```
-Configurar la Base de Datos:
+4.  Configurar la Base de Datos:
 
-Crear el archivo lib/core/constants.dart con las credenciales de Supabase:
+  Crear el archivo lib/core/constants.dart con las credenciales de Supabase:
 
  ```Dart
-class Constants {
-  static const String supabaseUrl = 'TU_URL_AQUI';
-  static const String supabaseAnonKey = 'TU_KEY_AQUI';
-}
+  class Constants {
+    static const String supabaseUrl = 'TU_URL_AQUI';
+    static const String supabaseAnonKey = 'TU_KEY_AQUI';
+  }
  ```
-Ejecutar la aplicación (asegúrate de tener un emulador abierto o dispositivo físico conectado):
+5.  Ejecutar la aplicación (asegúrate de tener un emulador abierto o dispositivo físico conectado):
 
  ```Bash
-flutter run
+    flutter run
  ```
 ---
-🔐 Credenciales de Prueba
+### 🔐 Credenciales de Prueba
+
 Para evaluar el sistema, la autenticación está configurada con un acceso de prueba exclusivo.
 
 Correo: prueba@gmail.com 
