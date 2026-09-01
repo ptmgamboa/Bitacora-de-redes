@@ -1,15 +1,5 @@
-Markdown
-<div align="center">
-  <h1>[Nombre de la Asignatura]</h1>
-  <h2>Proyecto: Bitácora Móvil de Redes</h2>
-</div>
-
-**Integrantes del Equipo:**
-* [Nombre y Apellidos del Integrante 1]
-* [Nombre y Apellidos del Integrante 2]
-* [Nombre y Apellidos del Integrante 3]
-
-**Fecha:** [Día] de [Mes] de 202X
+---
+<img width="1414" height="2000" alt="portada zacek" src="https://github.com/user-attachments/assets/bf6937c0-0070-4095-88e9-c84ccebba7cd" />
 
 ---
 
@@ -71,14 +61,22 @@ IP (Dispositivo): 4 octetos numéricos exactos en rango 0-255.
 Dirección MAC: Autocompletado integrado de XX:XX:XX:XX:XX:XX.
 
 🧠 Conclusiones Individuales
-[Nombre del Integrante 1]:
 
-"[Escribe aquí tu conclusión personal. Ej: Al desarrollar esta aplicación comprendí la importancia de conectar una interfaz móvil con una base de datos en tiempo real...]"
+Beltrán Bastida Braulio Santiago:
 
-[Nombre del Integrante 2]:
+"El desarrollo de esta bitácora móvil nos permitió poner en práctica lo aprendido sobre administración de redes y desarrollo de software en un proyecto real. Logramos crear una aplicación fácil de usar que cumple con todos los requisitos, permitiendo registrar y modificar redes, gestionar el inventario de dispositivos y validar que datos clave como la IP o la MAC se ingresen de forma correcta sin errores. Además, la experiencia de trabajar en equipo mediante GitHub nos ayudó a coordinar los cambios de cada integrante y a mantener el código organizado. En general, este proyecto nos deja una herramienta muy útil para controlar la información de una infraestructura de red y refuerza nuestras habilidades para crear soluciones móviles prácticas."
 
-"[Escribe aquí tu conclusión personal. Ej: Mi aportación en el proyecto me permitió entender cómo aplicar validaciones estrictas para evitar errores de usuario...]"
+Garcia Garcia César Eduardo:
 
-[Nombre del Integrante 3]:
+"Este proyecto me permitió consolidar mis conocimientos en la conexión de una interfaz móvil con Supabase, además de aprender a gestionar repositorios públicos, sincronizar ramas y colaborar eficientemente usando comandos de Git y GitHub ya que era algo nuevo para mi y creia que era dificil, pero al ponerlo a prueba es muy facil de entender."
+
+Gómez Marván Abraham Raul:
+
+"Dentro de la práctica, integrar la bitácora de redes era una solución eficiente para poder segmentar bien las redes, el detalle fue optimizar esto mediante flutter puesto que debíamos tener un inventario estructurado en flutter y supabase, tuvimos que tener en cuenta toda la lista de cotejo aunque nos centramos mucho en detalles como la limitación de errores humanos en la captura de direcciones IP, MAC y subredes gracias a usar validaciones estrictas y relaciones de llaves foráneas, el enfoque cerrado que le dimos garantizó que sólo los usuarios autorizados podían gestionar la infraestructura de la red resguardando la información crítica del sistema."
+
+Ruiz Rincón José luis:
 
 "[Escribe aquí tu conclusión personal. Ej: La experiencia de trabajar con Flutter y GitHub en equipo me enseñó a llevar un mejor control de versiones y diseño de UI...]"
+
+
+
