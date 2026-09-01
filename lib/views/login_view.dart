@@ -46,14 +46,14 @@ class _LoginViewState extends State<LoginView> {
               const SizedBox(height: 40),
               TextFormField(
                 controller: _emailCtrl,
-                decoration: const InputDecoration(labelText: 'Correo Electrónico', border: OutlineInputBorder()),
+                decoration: const InputDecoration(labelText: 'Correo Electrónico', hintText: 'ejemplo@correo.com', border: OutlineInputBorder()),
                 validator: (val) => val!.isEmpty ? 'Requerido' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passCtrl,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Contraseña', border: OutlineInputBorder()),
+                decoration: const InputDecoration(labelText: 'Contraseña', hintText: 'Contraseña segura', border: OutlineInputBorder()),
                 validator: (val) => val!.isEmpty ? 'Requerido' : null,
               ),
               const SizedBox(height: 24),
@@ -62,7 +62,7 @@ class _LoginViewState extends State<LoginView> {
                   : ElevatedButton(
                 onPressed: _iniciarSesion,
                 style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
-                child: const Text('Ingresar'),
+                child: const Text('Iniciar Sesión'),
               )
             ],
           ),
