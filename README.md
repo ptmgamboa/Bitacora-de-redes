@@ -15,35 +15,42 @@ La justificación de esta aplicación radica en agilizar el proceso de gestión 
 
 Para ejecutar este proyecto en tu entorno local, sigue estos pasos:
 
+
 1. **Clonar el repositorio:**
    ```bash
    git clone [https://github.com/ptmgamboa/Bitacora-de-redes.git](https://github.com/ptmgamboa/Bitacora-de-redes.git)
 Entrar a la carpeta del proyecto:
 
-Bash
-cd Bitacora-de-redes
+ ```Bash
+    cd Bitacora-de-redes
+ ```
 Instalar las dependencias de Flutter:
-
-Bash
-flutter pub get
+ ```Bash
+    flutter pub get
+ ```
 Configurar la Base de Datos:
+
 Crear el archivo lib/core/constants.dart con las credenciales de Supabase:
 
-Dart
+ ```Dart
 class Constants {
   static const String supabaseUrl = 'TU_URL_AQUI';
   static const String supabaseAnonKey = 'TU_KEY_AQUI';
 }
+ ```
 Ejecutar la aplicación (asegúrate de tener un emulador abierto o dispositivo físico conectado):
 
-Bash
+ ```Bash
 flutter run
+ ```
+---
 🔐 Credenciales de Prueba
 Para evaluar el sistema, la autenticación está configurada con un acceso de prueba exclusivo.
 
-Correo: prueba@gmail.com
+Correo: prueba@gmail.com 
 
 Contraseña: 12345678
+
 ---
 📸 Evidencias de Funcionamiento
 ### 1. Autenticación e Inicio de Sesión
@@ -89,7 +96,8 @@ Uso de la barra de búsqueda global, la cual filtra los resultados instantáneam
 </div>
 
 
-⚙️ Arquitectura y Validaciones Técnicas
+---
+### ⚙️ Arquitectura y Validaciones Técnicas
 Base de Datos (Supabase): Relacional. Tabla redes y tabla dispositivos vinculadas mediante llave foránea (red_id).
 
 Reglas de Captura Estricta:
@@ -100,7 +108,10 @@ IP (Dispositivo): 4 octetos numéricos exactos en rango 0-255.
 
 Dirección MAC: Autocompletado integrado de XX:XX:XX:XX:XX:XX.
 
-🧠 Conclusiones Individuales
+
+---
+
+### 🧠 Conclusiones Individuales
 Beltrán Bastida Braulio Santiago:
 
 El desarrollo de esta bitácora móvil nos permitió poner en práctica lo aprendido sobre administración de redes y desarrollo de software en un proyecto real. Logramos crear una aplicación fácil de usar que cumple con todos los requisitos, permitiendo registrar y modificar redes, gestionar el inventario de dispositivos y validar que datos clave como la IP o la MAC se ingresen de forma correcta sin errores. Además, la experiencia de trabajar en equipo mediante GitHub nos ayudó a coordinar los cambios de cada integrante y a mantener el código organizado. En general, este proyecto nos deja una herramienta muy útil para controlar la información de una infraestructura de red y refuerza nuestras habilidades para crear soluciones móviles prácticas.
