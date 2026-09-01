@@ -85,12 +85,31 @@ class _DevicesViewState extends State<DevicesView> {
                         ),
                       ),
                       isThreeLine: true,
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                        onPressed: () async {
-                          await _service.deleteDispositivo(d.id);
-                          setState(() {}); // Refrescar vista
-                        },
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // --- BOTÓN DE EDITAR ---
+                          IconButton(
+                            icon: const Icon(Icons.edit_outlined, color: Colors.blueAccent),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => _DeviceFormDialog(
+                                  dispositivo: d, // Aquí le pasamos los datos actuales para que los cargue
+                                  onSaved: () => setState(() {}), // Refresca al guardar
+                                ),
+                              );
+                            },
+                          ),
+                          // --- BOTÓN DE ELIMINAR ---
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                            onPressed: () async {
+                              await _service.deleteDispositivo(d.id);
+                              setState(() {}); // Refrescar vista
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   );
