@@ -3,6 +3,7 @@ import '../models/device_model.dart';
 import '../services/supabase_service.dart';
 import '../models/network_model.dart';
 import '../core/validators.dart';
+import 'package:flutter/services.dart';
 
 class DevicesView extends StatefulWidget {
   const DevicesView({super.key});
@@ -243,6 +244,10 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
                 controller: _macCtrl,
                 decoration: const InputDecoration(labelText: 'MAC (XX:XX:XX:XX:XX:XX)', border: OutlineInputBorder()),
                 validator: Validators.validarMAC,
+                inputFormatters: [
+                  MacAddressFormatter(),
+                  LengthLimitingTextInputFormatter(17), // Limita exactamente a 17 caracteres
+                ],
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -258,13 +263,16 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
+                isExpanded: true, // Obliga al menú a respetar el ancho de la pantalla
                 value: _selectedRedId,
                 decoration: const InputDecoration(labelText: 'Red Asociada', border: OutlineInputBorder()),
                 items: _redesDisponibles.map((red) {
-                  // Corrección de propiedades anulables
                   return DropdownMenuItem(
                     value: red.id ?? '',
-                    child: Text('${red.nombre ?? "Sin nombre"} (${red.segmento ?? "Sin segmento"})'),
+                    child: Text(
+                      '${red.nombre ?? "Sin nombre"} (${red.segmento ?? "Sin segmento"})',
+                      overflow: TextOverflow.ellipsis, // Agrega "..." si el texto es muy largo
+                    ),
                   );
                 }).toList(),
                 onChanged: (val) => setState(() => _selectedRedId = val),
@@ -284,6 +292,39 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
           child: const Text('Guardar'),
         ),
       ],
+    );
+  }
+}
+class MacAddressFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+
+    // 1. Si el usuario está borrando, permitimos que lo haga normalmente
+    if (oldValue.text.length >= newValue.text.length) {
+      return newValue.copyWith(text: newValue.text.toUpperCase());
+    }
+
+    // 2. Limpiamos los dos puntos previos y forzamos mayúsculas
+    var text = newValue.text.replaceAll(':', '').toUpperCase();
+    var buffer = StringBuffer();
+
+    // 3. Reconstruimos el texto agregando ':' cada 2 caracteres
+    for (int i = 0; i < text.length; i++) {
+      buffer.write(text[i]);
+      var nonZeroIndex = i + 1;
+      // Agregamos ':' si es par y no hemos llegado al límite (12 caracteres)
+      if (nonZeroIndex % 2 == 0 && nonZeroIndex != 12) {
+        buffer.write(':');
+      }
+    }
+
+    var string = buffer.toString();
+
+    return newValue.copyWith(
+      text: string,
+      // Mueve el cursor automáticamente al final
+      selection: TextSelection.collapsed(offset: string.length),
     );
   }
 }

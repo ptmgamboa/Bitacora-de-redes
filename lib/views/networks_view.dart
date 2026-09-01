@@ -142,7 +142,7 @@ class _NetworkFormDialogState extends State<_NetworkFormDialog> {
               controller: _segmentoCtrl,
               decoration: const InputDecoration(labelText: 'Segmento (Ej. 192.168.1.0/24)', border: OutlineInputBorder()),
               validator: Validators.validarRed,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: TextInputType.datetime,
             ),
           ],
         ),

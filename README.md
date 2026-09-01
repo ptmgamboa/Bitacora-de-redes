@@ -1,24 +1,84 @@
-# Bitácora Móvil de Redes
+Markdown
+<div align="center">
+  <h1>[Nombre de la Asignatura]</h1>
+  <h2>Proyecto: Bitácora Móvil de Redes</h2>
+</div>
 
-Aplicación móvil desarrollada en Flutter orientada a la gestión y segmentación de redes, con control de inventario de dispositivos. Utiliza Supabase como backend (BaaS) para el almacenamiento de datos relacional y autenticación de usuarios.
+**Integrantes del Equipo:**
+* [Nombre y Apellidos del Integrante 1]
+* [Nombre y Apellidos del Integrante 2]
+* [Nombre y Apellidos del Integrante 3]
 
-## Arquitectura y Base de Datos
-* **Tabla `redes`**: Almacena los segmentos lógicos (ID, Nombre, Segmento, Fecha de creación).
-* **Tabla `dispositivos`**: Vinculada a las redes mediante una llave foránea (`red_id`), almacena el inventario físico (Nombre, MAC única, Fabricante, Ubicación, IP IPv4).
-* **Autenticación**: Sistema de acceso cerrado exclusivo para docentes y administradores. No existe registro público.
+**Fecha:** [Día] de [Mes] de 202X
 
-## Funcionalidades Principales
-* **Gestor de Redes (CRUD)**: Creación, lectura, actualización y eliminación de subredes.
-* **Gestor de Dispositivos (CRUD)**: Formulario de captura que asocia equipos a una red existente mediante menús desplegables para evitar errores de tipeo.
-* **Buscador Unificado**: Barra de búsqueda global que filtra en tiempo real evaluando coincidencias simultáneas en IP, MAC, Nombre, Fabricante y Ubicación.
+---
 
-## Guía de Captura y Validaciones
+## 📖 Introducción y Justificación
+La administración eficiente de redes y dispositivos es fundamental en cualquier entorno tecnológico. Este proyecto surge de la necesidad de contar con una herramienta móvil que permita registrar, segmentar y consultar el inventario de equipos de red en tiempo real.
 
-El sistema incluye validación estricta a nivel de interfaz (Regex).
+La justificación de esta aplicación radica en agilizar el proceso de gestión de direcciones IP y direcciones MAC, reduciendo errores humanos de captura mediante validaciones estrictas y ofreciendo un buscador unificado para encontrar rápidamente cualquier equipo en la infraestructura.
 
-| Campo | Regla de Captura | Ejemplo Correcto | Dará Error (Evitar) |
-| :--- | :--- | :--- | :--- |
-| **Segmento (Red)** | 4 octetos separados por puntos + diagonal (`/`) + prefijo de red (0-32). | `192.168.1.0/24` | `192.168.1.0` (Falta prefijo)<br>`10.0.0.0 /8` (Espacio extra) |
-| **IP (Dispositivo)** | 4 octetos numéricos exactos en rango 0-255. | `192.168.1.15` | `192.168.1.256` (Fuera de límite) |
-| **Dirección MAC** | 6 pares de caracteres alfanuméricos separados por dos puntos (`:`). | `00:1A:2B:3C:4D:5E` | `00-1A-2B-3C-4D-5E` (Uso de guiones) |
+---
 
+## 🚀 Guía de Instalación y Ejecución
+
+Para ejecutar este proyecto en tu entorno local, sigue estos pasos:
+
+1. **Clonar el repositorio:**
+   ```bash
+   git clone [https://github.com/ptmgamboa/Bitacora-de-redes.git](https://github.com/ptmgamboa/Bitacora-de-redes.git)
+Entrar a la carpeta del proyecto:
+
+Bash
+cd Bitacora-de-redes
+Instalar las dependencias de Flutter:
+
+Bash
+flutter pub get
+Configurar la Base de Datos:
+Crear el archivo lib/core/constants.dart con las credenciales de Supabase:
+
+Dart
+class Constants {
+static const String supabaseUrl = 'TU_URL_AQUI';
+static const String supabaseAnonKey = 'TU_KEY_AQUI';
+}
+Ejecutar la aplicación (asegúrate de tener un emulador abierto o dispositivo físico conectado):
+
+Bash
+flutter run
+🔐 Credenciales de Prueba
+Para evaluar el sistema, la autenticación está configurada con un acceso de prueba exclusivo.
+
+Correo: prueba@gmail.com
+
+Contraseña: 12345678
+
+📸 Evidencias de Funcionamiento
+1. Autenticación e Inicio de Sesión
+2. Gestión de Redes (CRUD de Segmentos)
+3. Inventario de Dispositivos (CRUD de Equipos)
+4. Buscador Unificado (Filtros en tiempo real)
+   ⚙️ Arquitectura y Validaciones Técnicas
+   Base de Datos (Supabase): Relacional. Tabla redes y tabla dispositivos vinculadas mediante llave foránea (red_id).
+
+Reglas de Captura Estricta:
+
+Segmento (Red): Requiere notación CIDR exacta (ej. 192.168.1.0/24).
+
+IP (Dispositivo): 4 octetos numéricos exactos en rango 0-255.
+
+Dirección MAC: Autocompletado integrado de XX:XX:XX:XX:XX:XX.
+
+🧠 Conclusiones Individuales
+[Nombre del Integrante 1]:
+
+"[Escribe aquí tu conclusión personal. Ej: Al desarrollar esta aplicación comprendí la importancia de conectar una interfaz móvil con una base de datos en tiempo real...]"
+
+[Nombre del Integrante 2]:
+
+"[Escribe aquí tu conclusión personal. Ej: Mi aportación en el proyecto me permitió entender cómo aplicar validaciones estrictas para evitar errores de usuario...]"
+
+[Nombre del Integrante 3]:
+
+"[Escribe aquí tu conclusión personal. Ej: La experiencia de trabajar con Flutter y GitHub en equipo me enseñó a llevar un mejor control de versiones y diseño de UI...]"
