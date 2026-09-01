@@ -62,7 +62,7 @@ class _LoginViewState extends State<LoginView> {
                   : ElevatedButton(
                 onPressed: _iniciarSesion,
                 style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
-                child: const Text('Ingresar'),
+                child: const Text('Iniciar Sesión'),
               )
             ],
           ),
