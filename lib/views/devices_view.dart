@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/device_model.dart';
 import '../services/supabase_service.dart';
 import '../models/network_model.dart';
 import '../core/validators.dart';
-import 'package:flutter/services.dart';
 
 class DevicesView extends StatefulWidget {
   const DevicesView({super.key});
@@ -15,28 +15,87 @@ class DevicesView extends StatefulWidget {
 class _DevicesViewState extends State<DevicesView> {
   final _service = SupabaseService();
   String _searchQuery = '';
+  final TextEditingController _searchCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _confirmarEliminar(DeviceModel d) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
+            SizedBox(width: 8),
+            Text('Eliminar Dispositivo'),
+          ],
+        ),
+        content: Text('¿Deseas eliminar el dispositivo "${d.nombre}" (${d.ip})? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar == true) {
+      await _service.deleteDispositivo(d.id);
+      if (mounted) {
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Dispositivo eliminado correctamente'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    const primaryBlue = Color(0xFF1565C0);
+
     return Column(
       children: [
+        // Buscador superior estilizado
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
           child: TextField(
+            controller: _searchCtrl,
             decoration: InputDecoration(
-              labelText: 'Buscar (IP, MAC, Nombre, Fabricante)',
-              prefixIcon: const Icon(Icons.search),
-              filled: true,
-              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.0),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 16.0),
+              hintText: 'Buscar por IP, MAC, Nombre o Fabricante',
+              prefixIcon: const Icon(Icons.search_rounded, color: primaryBlue),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                icon: const Icon(Icons.clear_rounded, size: 20),
+                onPressed: () {
+                  _searchCtrl.clear();
+                  setState(() => _searchQuery = '');
+                },
+              )
+                  : null,
             ),
             onChanged: (val) => setState(() => _searchQuery = val),
           ),
         ),
+
+        // Listado de dispositivos
         Expanded(
           child: FutureBuilder<List<Map<String, dynamic>>>(
             future: _service.buscarDispositivos(_searchQuery),
@@ -45,69 +104,136 @@ class _DevicesViewState extends State<DevicesView> {
                 return const Center(child: CircularProgressIndicator());
               }
               if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(
+                return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.devices_other, size: 64, color: Colors.grey),
-                      SizedBox(height: 8),
-                      Text('No hay dispositivos registrados.', style: TextStyle(color: Colors.grey)),
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.devices_other_rounded, size: 48, color: Colors.grey.shade400),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        _searchQuery.isEmpty
+                            ? 'No hay dispositivos registrados.'
+                            : 'No se encontraron resultados.',
+                        style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                      ),
                     ],
                   ),
                 );
               }
+
               final dispositivos = snapshot.data!.map((e) => DeviceModel.fromJson(e)).toList();
 
               return ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 itemCount: dispositivos.length,
                 itemBuilder: (context, index) {
                   final d = dispositivos[index];
                   return Card(
-                    elevation: 1.5,
-                    margin: const EdgeInsets.only(bottom: 10.0),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                      leading: CircleAvatar(
-                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                        child: Icon(Icons.computer, color: Theme.of(context).colorScheme.onPrimaryContainer),
-                      ),
-                      title: Text(
-                        d.nombre,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 4.0),
-                        child: Text(
-                          '${d.ip} • ${d.redNombre ?? "Sin Red"}\nMAC: ${d.mac}',
-                          style: const TextStyle(height: 1.3),
-                        ),
-                      ),
-                      isThreeLine: true,
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
+                    margin: const EdgeInsets.only(bottom: 12.0),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // --- BOTÓN DE EDITAR ---
-                          IconButton(
-                            icon: const Icon(Icons.edit_outlined, color: Colors.blueAccent),
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => _DeviceFormDialog(
-                                  dispositivo: d, // Aquí le pasamos los datos actuales para que los cargue
-                                  onSaved: () => setState(() {}), // Refresca al guardar
-                                ),
-                              );
-                            },
+                          // Icono distintivo tipo tarjeta
+                          Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              color: primaryBlue.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.computer_rounded, color: primaryBlue, size: 24),
                           ),
-                          // --- BOTÓN DE ELIMINAR ---
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                            onPressed: () async {
-                              await _service.deleteDispositivo(d.id);
-                              setState(() {}); // Refrescar vista
-                            },
+                          const SizedBox(width: 14),
+
+                          // Información del dispositivo
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  d.nombre,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: Color(0xFF1F2937),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: primaryBlue.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        d.ip,
+                                        style: const TextStyle(
+                                          color: primaryBlue,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        d.redNombre ?? "Sin Red",
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: Colors.grey.shade600,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'MAC: ${d.mac}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey.shade500,
+                                    fontFamily: 'monospace',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Botones de acción
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined, color: primaryBlue, size: 20),
+                                tooltip: 'Editar',
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => _DeviceFormDialog(
+                                      dispositivo: d,
+                                      onSaved: () => setState(() {}),
+                                    ),
+                                  );
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                                tooltip: 'Eliminar',
+                                onPressed: () => _confirmarEliminar(d),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -118,27 +244,22 @@ class _DevicesViewState extends State<DevicesView> {
             },
           ),
         ),
+
+        // Botón inferior para agregar
         Padding(
           padding: const EdgeInsets.all(16.0),
-          child: SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-              ),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => _DeviceFormDialog(
-                    dispositivo: null, // Soluciona la advertencia del parámetro opcional
-                    onSaved: () => setState(() {}),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Agregar Dispositivo', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
+          child: ElevatedButton.icon(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => _DeviceFormDialog(
+                  dispositivo: null,
+                  onSaved: () => setState(() {}),
+                ),
+              );
+            },
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Agregar Dispositivo'),
           ),
         ),
       ],
@@ -183,18 +304,33 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
     }
   }
 
+  @override
+  void dispose() {
+    _nombreCtrl.dispose();
+    _macCtrl.dispose();
+    _fabCtrl.dispose();
+    _ubicaCtrl.dispose();
+    _ipCtrl.dispose();
+    super.dispose();
+  }
+
   void _cargarRedes() async {
     final res = await SupabaseService().getRedes();
-    setState(() {
-      _redesDisponibles = res.map((e) => NetworkModel.fromJson(e)).toList();
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _redesDisponibles = res.map((e) => NetworkModel.fromJson(e)).toList();
+        _isLoading = false;
+      });
+    }
   }
 
   void _guardar() async {
     if (!_formKey.currentState!.validate() || _selectedRedId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Complete todos los campos correctamente')),
+        const SnackBar(
+          content: Text('Complete todos los campos requeridos'),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       return;
     }
@@ -218,10 +354,13 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
       widget.onSaved();
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      // Corrección del BuildContext asíncrono
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al guardar (¿MAC duplicada?)')),
+          const SnackBar(
+            content: Text('Error al guardar (¿MAC o IP duplicada?)'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } finally {
@@ -231,6 +370,8 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    const primaryBlue = Color(0xFF1565C0);
+
     if (_isLoading) {
       return const AlertDialog(
         content: SizedBox(height: 100, child: Center(child: CircularProgressIndicator())),
@@ -239,100 +380,116 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
 
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-      title: Text(widget.dispositivo == null ? 'Nuevo Dispositivo' : 'Editar Dispositivo'),
+      titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+      title: Row(
+        children: [
+          Icon(
+            widget.dispositivo == null ? Icons.add_to_queue_rounded : Icons.edit_note_rounded,
+            color: primaryBlue,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            widget.dispositivo == null ? 'Nuevo Dispositivo' : 'Editar Dispositivo',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const SizedBox(height: 10),
               TextFormField(
                 controller: _nombreCtrl,
-                decoration: const InputDecoration(labelText: 'Nombre', border: OutlineInputBorder()),
+                decoration: const InputDecoration(labelText: 'Nombre del Dispositivo'),
                 validator: Validators.requerido,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _ipCtrl,
-                decoration: const InputDecoration(labelText: 'Dirección IPv4', border: OutlineInputBorder()),
+                decoration: const InputDecoration(labelText: 'Dirección IPv4'),
                 validator: Validators.validarIPv4,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _macCtrl,
-                decoration: const InputDecoration(labelText: 'MAC (XX:XX:XX:XX:XX:XX)', border: OutlineInputBorder()),
+                decoration: const InputDecoration(labelText: 'MAC (XX:XX:XX:XX:XX:XX)'),
                 validator: Validators.validarMAC,
                 inputFormatters: [
                   MacAddressFormatter(),
-                  LengthLimitingTextInputFormatter(17), // Limita exactamente a 17 caracteres
+                  LengthLimitingTextInputFormatter(17),
                 ],
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _fabCtrl,
-                decoration: const InputDecoration(labelText: 'Fabricante', border: OutlineInputBorder()),
+                decoration: const InputDecoration(labelText: 'Fabricante'),
                 validator: Validators.requerido,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _ubicaCtrl,
-                decoration: const InputDecoration(labelText: 'Ubicación', border: OutlineInputBorder()),
+                decoration: const InputDecoration(labelText: 'Ubicación'),
                 validator: Validators.requerido,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                isExpanded: true, // Obliga al menú a respetar el ancho de la pantalla
+                isExpanded: true,
                 value: _selectedRedId,
-                decoration: const InputDecoration(labelText: 'Red Asociada', border: OutlineInputBorder()),
+                decoration: const InputDecoration(labelText: 'Red Asociada'),
                 items: _redesDisponibles.map((red) {
                   return DropdownMenuItem(
                     value: red.id ?? '',
                     child: Text(
                       '${red.nombre ?? "Sin nombre"} (${red.segmento ?? "Sin segmento"})',
-                      overflow: TextOverflow.ellipsis, // Agrega "..." si el texto es muy largo
+                      overflow: TextOverflow.ellipsis,
                     ),
                   );
                 }).toList(),
                 onChanged: (val) => setState(() => _selectedRedId = val),
                 validator: (val) => val == null || val.isEmpty ? 'Seleccione una red' : null,
               ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
       ),
+      actionsPadding: const EdgeInsets.all(16),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        SizedBox(
+          width: 110,
+          child: ElevatedButton(
+            onPressed: _guardar,
+            child: const Text('Guardar'),
           ),
-          onPressed: _guardar,
-          child: const Text('Guardar'),
         ),
       ],
     );
   }
 }
+
 class MacAddressFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
       TextEditingValue oldValue, TextEditingValue newValue) {
-
-    // 1. Si el usuario está borrando, permitimos que lo haga normalmente
     if (oldValue.text.length >= newValue.text.length) {
       return newValue.copyWith(text: newValue.text.toUpperCase());
     }
 
-    // 2. Limpiamos los dos puntos previos y forzamos mayúsculas
     var text = newValue.text.replaceAll(':', '').toUpperCase();
     var buffer = StringBuffer();
 
-    // 3. Reconstruimos el texto agregando ':' cada 2 caracteres
     for (int i = 0; i < text.length; i++) {
       buffer.write(text[i]);
       var nonZeroIndex = i + 1;
-      // Agregamos ':' si es par y no hemos llegado al límite (12 caracteres)
       if (nonZeroIndex % 2 == 0 && nonZeroIndex != 12) {
         buffer.write(':');
       }
@@ -342,7 +499,6 @@ class MacAddressFormatter extends TextInputFormatter {
 
     return newValue.copyWith(
       text: string,
-      // Mueve el cursor automáticamente al final
       selection: TextSelection.collapsed(offset: string.length),
     );
   }
