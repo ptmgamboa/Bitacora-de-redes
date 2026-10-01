@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../services/supabase_service.dart';
-import 'login_view.dart';
-import 'networks_view.dart';
-import 'devices_view.dart';
+import 'package:bitacora_redes/views/dashboard_view.dart';
+import 'package:bitacora_redes/views/networks_view.dart';
+import 'package:bitacora_redes/views/devices_view.dart';
+import 'package:bitacora_redes/views/profile_view.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -12,116 +12,58 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  int _currentIndex = 0;
-  final List<Widget> _pantallas = [
-    const DevicesView(),
+  int _selectedIndex = 0;
+
+  static final List<Widget> _widgetOptions = <Widget>[
+    const DashboardView(),
     const NetworksView(),
+    const DevicesView(),
+    const ProfileView(),
   ];
 
-  void _cerrarSesion() async {
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cerrar Sesión'),
-        content: const Text('¿Estás seguro de que deseas salir de la aplicación?'),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Cerrar Sesión'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmar == true) {
-      await SupabaseService().logout();
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginView()),
-        );
-      }
-    }
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    const primaryBlue = Color(0xFF1565C0);
-
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: primaryBlue,
-        title: const Row(
-          children: [
-            Icon(Icons.hub_rounded, color: Colors.white, size: 24),
-            SizedBox(width: 10),
-            Text(
-              'NetControl ITSU',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Colors.white),
-            onPressed: _cerrarSesion,
-            tooltip: 'Cerrar Sesión',
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _widgetOptions,
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFF673AB7),
+        unselectedItemColor: Colors.grey[600],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        elevation: 8,
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_outlined),
+            activeIcon: Icon(Icons.dashboard),
+            label: 'Inicio',
           ),
-          const SizedBox(width: 8),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.lan_outlined),
+            activeIcon: Icon(Icons.lan),
+            label: 'Redes',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.devices_other_outlined),
+            activeIcon: Icon(Icons.devices_other),
+            label: 'Dispositivos',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Perfil',
+          ),
         ],
-      ),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 200),
-        child: _pantallas[_currentIndex],
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
-          backgroundColor: Colors.white,
-          selectedItemColor: primaryBlue,
-          unselectedItemColor: Colors.grey.shade500,
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.devices_other_rounded),
-              activeIcon: Icon(Icons.devices_rounded),
-              label: 'Dispositivos',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.router_outlined),
-              activeIcon: Icon(Icons.router_rounded),
-              label: 'Redes',
-            ),
-          ],
-        ),
       ),
     );
   }
