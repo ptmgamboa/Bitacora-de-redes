@@ -83,7 +83,7 @@ class _LoginViewState extends State<LoginView> {
 
                   // Títulos institucionales
                   const Text(
-                    'NetControl ITSU',
+                    'Bitacora.Net',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 26,

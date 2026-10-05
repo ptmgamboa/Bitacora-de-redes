@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:bitacora_redes/views/dashboard_view.dart';
-import 'package:bitacora_redes/views/networks_view.dart';
-import 'package:bitacora_redes/views/devices_view.dart';
-import 'package:bitacora_redes/views/profile_view.dart';
+import 'dashboard_view.dart';
+import 'networks_view.dart';
+import 'devices_view.dart';
+import 'reports_view.dart';
+import 'profile_view.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -18,7 +19,17 @@ class _HomeViewState extends State<HomeView> {
     const DashboardView(),
     const NetworksView(),
     const DevicesView(),
+    const ReportsView(),
     const ProfileView(),
+  ];
+
+  // Títulos dinámicos y centrados para el AppBar superior
+  static const List<String> _titulos = <String>[
+    'Inicio',
+    'Bitácora de Redes',
+    'Dispositivos',
+    'Reportes',
+    'Perfil',
   ];
 
   void _onItemTapped(int index) {
@@ -29,7 +40,22 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   Widget build(BuildContext context) {
+    const primaryPurple = Color(0xFF673AB7);
+
     return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        title: Text(
+          _titulos[_selectedIndex],
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        backgroundColor: primaryPurple,
+        foregroundColor: Colors.white,
+        elevation: 1,
+      ),
       body: IndexedStack(
         index: _selectedIndex,
         children: _widgetOptions,
@@ -37,7 +63,7 @@ class _HomeViewState extends State<HomeView> {
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFF673AB7),
+        selectedItemColor: primaryPurple,
         unselectedItemColor: Colors.grey[600],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
@@ -57,6 +83,11 @@ class _HomeViewState extends State<HomeView> {
             icon: Icon(Icons.devices_other_outlined),
             activeIcon: Icon(Icons.devices_other),
             label: 'Dispositivos',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.assessment_outlined),
+            activeIcon: Icon(Icons.assessment),
+            label: 'Reportes',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),

@@ -19,12 +19,12 @@ class BitacoraApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primaryBlue = Color(0xFF1565C0);
+    const primaryBlue = Color(0xFF6A1B9A);
     const backgroundColor = Color(0xFFF8F9FA);
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'NetControl ITSU',
+      title: 'Bitacora.Net', // Nombre actualizado
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -34,7 +34,7 @@ class BitacoraApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: backgroundColor,
 
-        // Estilo global para tarjetas (Corregido con CardThemeData)
+        // Estilo global para tarjetas
         cardTheme: CardThemeData(
           color: Colors.white,
           elevation: 0,

@@ -1,174 +1,232 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class DashboardView extends StatelessWidget {
+class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5FA),
-      appBar: AppBar(
-        title: const Text('Panel de Control'),
-        backgroundColor: const Color(0xFF673AB7),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none),
-            onPressed: () {},
-          ),
-          const Padding(
-            padding: EdgeInsets.only(right: 16.0),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.white24,
-              child: Icon(Icons.person, color: Colors.white, size: 20),
-            ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start, // Corregido: CrossAxisAlignment
-          children: [
-            // Saludo de bienvenida
-            const Text(
-              'Bienvenido de nuevo,',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-            const Text(
-              'Administrador de Red',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)),
-            ),
-            const SizedBox(height: 20),
+  State<DashboardView> createState() => _DashboardViewState();
+}
 
-            // Fila de tarjetas métricas
+class _DashboardViewState extends State<DashboardView> {
+  int _totalRedes = 0;
+  int _totalDispositivos = 0;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRealData();
+  }
+
+  Future<void> _fetchRealData() async {
+    setState(() => _isLoading = true);
+    try {
+      final redesRes = await Supabase.instance.client.from('redes').select('id');
+      List dispRes = [];
+      try {
+        dispRes = await Supabase.instance.client.from('dispositivos').select('id');
+      } catch (_) {
+        dispRes = await Supabase.instance.client.from('devices').select('id');
+      }
+
+      setState(() {
+        _totalRedes = (redesRes as List).length;
+        _totalDispositivos = (dispRes as List).length;
+      });
+    } catch (e) {
+      debugPrint('Error al cargar datos del dashboard: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = Supabase.instance.client.auth.currentUser;
+    final userName = user?.email?.split('@').first ?? 'Usuario';
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF6F3F9),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Row(
               children: [
-                Expanded(
-                  child: _buildMetricCard(
-                    title: 'Dispositivos Conectados',
-                    value: '18',
-                    subtitle: '14 activos',
-                    icon: Icons.devices,
-                    color: const Color(0xFF673AB7),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3E5F5),
+                    borderRadius: BorderRadius.circular(8),
                   ),
+                  child: const Icon(Icons.hub, color: Color(0xFF6A1B9A), size: 20),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildMetricCard(
-                    title: 'Registro de Red',
-                    value: 'Sincronizado',
-                    subtitle: 'Hace 2 min',
-                    icon: Icons.history,
-                    color: const Color(0xFF009688),
-                  ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Bitacora.Net',
+                  style: TextStyle(color: Color(0xFF2C143E), fontWeight: FontWeight.bold, fontSize: 18),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-
-            // Tarjeta de Alertas
-            _buildMetricCard(
-              title: 'Alertas Recientes',
-              value: '0 Alertas Críticas',
-              subtitle: 'Todos los sistemas operando con normalidad',
-              icon: Icons.shield_outlined,
-              color: Colors.indigo,
-              isFullWidth: true,
-            ),
-            const SizedBox(height: 24),
-
-            // Gráfico / Estadísticas de Uso
-            const Text(
-              'Uso de Datos',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
-                ],
-              ),
-              child: Column(
-                children: [
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Ancho de Banda', style: TextStyle(fontWeight: FontWeight.w600)),
-                      Text('85.4 Mbps', style: TextStyle(color: Color(0xFF673AB7), fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: const LinearProgressIndicator(
-                      value: 0.65,
-                      minHeight: 10,
-                      backgroundColor: Color(0xFFEDE7F6),
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF673AB7)),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Descarga: 62.1 Mbps', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      Text('Carga: 23.3 Mbps', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            const Text('ITSU · Infraestructura de red', style: TextStyle(color: Colors.grey, fontSize: 11)),
           ],
+        ),
+      ),
+      body: RefreshIndicator(
+        onRefresh: _fetchRealData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '¡Hola, $userName!',
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF2C143E)),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3E5F5),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  user?.email ?? 'Administrador',
+                  style: const TextStyle(color: Color(0xFF6A1B9A), fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              const Text('Resumen de Infraestructura', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1.1, // Solución al desbordamiento
+                children: [
+                  _buildMetricCard(Icons.hub, '$_totalRedes', 'Redes', const Color(0xFF6A1B9A)),
+                  _buildMetricCard(Icons.devices, '$_totalDispositivos', 'Dispositivos', Colors.teal),
+                  _buildMetricCard(Icons.people, '1', 'Usuarios', Colors.deepOrange),
+                  _buildMetricCard(Icons.history, '5', 'Cambios Hoy', Colors.indigo),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Estado de la Red
+              Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Estado actual de la red', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildStatItem('$_totalDispositivos', 'Puntos totales', Colors.black87),
+                          _buildStatItem('$_totalDispositivos', 'Operativos', Colors.green),
+                          _buildStatItem('$_totalRedes', 'VLANs activas', const Color(0xFF6A1B9A)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Analítica de Disponibilidad
+              Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Disponibilidad de Red', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 16),
+                      Center(
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            SizedBox(
+                              width: 120,
+                              height: 120,
+                              child: CircularProgressIndicator(
+                                value: _totalDispositivos > 0 ? 1.0 : 0.0,
+                                strokeWidth: 14,
+                                backgroundColor: Colors.grey.shade200,
+                                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF6A1B9A)),
+                              ),
+                            ),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('$_totalDispositivos', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                                const Text('activos', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildMetricCard({
-    required String title,
-    required String value,
-    required String subtitle,
-    required IconData icon,
-    required Color color,
-    bool isFullWidth = false,
-  }) {
+  static Widget _buildMetricCard(IconData icon, String value, String label, Color color) {
     return Container(
-      width: isFullWidth ? double.infinity : null,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, // Corregido: CrossAxisAlignment
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(height: 12),
-          Text(title, style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+          Icon(icon, color: color, size: 28),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50))),
+          Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 2),
-          Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.grey, fontSize: 11),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
+    );
+  }
+
+  static Widget _buildStatItem(String val, String label, Color color) {
+    return Column(
+      children: [
+        Text(val, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+        const SizedBox(height: 2),
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+      ],
     );
   }
 }
