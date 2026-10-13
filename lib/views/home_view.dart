@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dashboard_view.dart';
 import 'networks_view.dart';
 import 'devices_view.dart';
+import 'vlans_view.dart';
 import 'reports_view.dart';
 import 'profile_view.dart';
 
@@ -19,6 +20,7 @@ class _HomeViewState extends State<HomeView> {
     const DashboardView(),
     const NetworksView(),
     const DevicesView(),
+    const VlansView(),
     const ReportsView(),
     const ProfileView(),
   ];
@@ -28,6 +30,7 @@ class _HomeViewState extends State<HomeView> {
     'Inicio',
     'Bitácora de Redes',
     'Dispositivos',
+    'Segmentación VLAN',
     'Reportes',
     'Perfil',
   ];
@@ -83,6 +86,11 @@ class _HomeViewState extends State<HomeView> {
             icon: Icon(Icons.devices_other_outlined),
             activeIcon: Icon(Icons.devices_other),
             label: 'Dispositivos',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.alt_route_outlined),
+            activeIcon: Icon(Icons.alt_route_rounded),
+            label: 'VLANs',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.assessment_outlined),

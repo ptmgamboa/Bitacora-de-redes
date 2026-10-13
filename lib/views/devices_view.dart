@@ -33,7 +33,6 @@ class _DevicesViewState extends State<DevicesView> {
     super.dispose();
   }
 
-  // Diálogo de confirmación para eliminar
   Future<void> _eliminarDispositivo(dynamic id, String nombre) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -67,7 +66,7 @@ class _DevicesViewState extends State<DevicesView> {
               backgroundColor: Colors.green,
             ),
           );
-          setState(() {}); // Refresca la lista
+          setState(() {});
         }
       } catch (e) {
         if (mounted) {
@@ -92,16 +91,25 @@ class _DevicesViewState extends State<DevicesView> {
     );
   }
 
+  // Abrir vista/modal de configuración especial de puertos y VLANs para Switches
+  void _abrirConfiguracionPuertos(DeviceModel d) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _PortConfigModal(dispositivo: d),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF673AB7);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5FA),
-      // Se eliminó el appBar interno para que no se duplique el título
       body: Column(
         children: [
-          // --- BARRA DE BÚSQUEDA ---
+          // BARRA DE BÚSQUEDA
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
@@ -126,7 +134,7 @@ class _DevicesViewState extends State<DevicesView> {
             ),
           ),
 
-          // --- LISTA DE DISPOSITIVOS ---
+          // LISTA DE DISPOSITIVOS
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
               future: _service.buscarDispositivos(_searchQuery),
@@ -198,16 +206,16 @@ class _DevicesViewState extends State<DevicesView> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Ícono principal
+                            // Ícono según el tipo de dispositivo
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: primaryColor.withOpacity(0.1),
+                                color: d.colorTipo.withOpacity(0.1),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
-                                Icons.computer,
-                                color: primaryColor,
+                              child: Icon(
+                                d.icono,
+                                color: d.colorTipo,
                                 size: 28,
                               ),
                             ),
@@ -218,14 +226,26 @@ class _DevicesViewState extends State<DevicesView> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Nombre del dispositivo
-                                  Text(
-                                    d.nombre,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: Colors.black87,
-                                    ),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          d.nombre,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                      ),
+                                      // Badge de tipo de equipo
+                                      _buildBadge(
+                                        icon: d.icono,
+                                        text: d.tipoTexto,
+                                        bgColor: d.colorTipo.withOpacity(0.1),
+                                        textColor: d.colorTipo,
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 6),
 
@@ -274,9 +294,21 @@ class _DevicesViewState extends State<DevicesView> {
                               ),
                             ),
 
-                            // Botones de acción (Editar / Eliminar)
+                            // Acciones (Configuración Especial / Editar / Eliminar)
                             Column(
                               children: [
+                                IconButton(
+                                  constraints: const BoxConstraints(),
+                                  padding: const EdgeInsets.all(6),
+                                  icon: Icon(
+                                    Icons.settings_ethernet_rounded,
+                                    color: d.esSwitch ? Colors.indigo : Colors.grey.shade600,
+                                    size: 22,
+                                  ),
+                                  tooltip: 'Configuración de Puertos / VLANs',
+                                  onPressed: () => _abrirConfiguracionPuertos(d),
+                                ),
+                                const SizedBox(height: 4),
                                 IconButton(
                                   constraints: const BoxConstraints(),
                                   padding: const EdgeInsets.all(6),
@@ -306,7 +338,6 @@ class _DevicesViewState extends State<DevicesView> {
         ],
       ),
 
-      // --- BOTÓN FLOTANTE ---
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'btn_devices_view_fab',
         backgroundColor: primaryColor,
@@ -318,7 +349,6 @@ class _DevicesViewState extends State<DevicesView> {
     );
   }
 
-  // Widget auxiliar para crear pequeñas etiquetas visuales
   Widget _buildBadge({
     required IconData icon,
     required String text,
@@ -350,7 +380,191 @@ class _DevicesViewState extends State<DevicesView> {
   }
 }
 
-// --- FORMULARIO EMERGENTE PARA DISPOSITIVOS ---
+// --- MODAL DE CONFIGURACIÓN ESPECIAL DE PUERTOS Y VLANS ---
+class _PortConfigModal extends StatefulWidget {
+  final DeviceModel dispositivo;
+
+  const _PortConfigModal({required this.dispositivo});
+
+  @override
+  State<_PortConfigModal> createState() => _PortConfigModalState();
+}
+
+class _PortConfigModalState extends State<_PortConfigModal> {
+  int _totalPuertos = 24; // Opciones: 8, 16, 24, 48
+  late Map<int, Map<String, dynamic>> _configPuertos;
+
+  @override
+  void initState() {
+    super.initState();
+    _inicializarPuertos();
+  }
+
+  void _inicializarPuertos() {
+    _configPuertos = {};
+    for (int i = 1; i <= _totalPuertos; i++) {
+      _configPuertos[i] = {
+        'vlan': (i % 2 == 0) ? 10 : 20,
+        'modo': (i == 1) ? 'Trunk' : 'Acceso',
+        'activo': true,
+      };
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const primaryPurple = Color(0xFF673AB7);
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.85,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Indicador superior
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          Row(
+            children: [
+              const Icon(Icons.settings_ethernet, color: primaryPurple, size: 28),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Puertos & VLANs - ${widget.dispositivo.nombre}',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      'Configuración de red y switches',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Selector de cantidad de puertos
+          Row(
+            children: [
+              const Text('Número de puertos:', style: TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(width: 12),
+              DropdownButton<int>(
+                value: _totalPuertos,
+                items: const [8, 16, 24, 48].map((n) {
+                  return DropdownMenuItem(value: n, child: Text('$n Puertos'));
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() {
+                      _totalPuertos = val;
+                      _inicializarPuertos();
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Matriz de puertos
+          Expanded(
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 1.2,
+              ),
+              itemCount: _totalPuertos,
+              itemBuilder: (context, index) {
+                final puerto = index + 1;
+                final cfg = _configPuertos[puerto]!;
+                final isTrunk = cfg['modo'] == 'Trunk';
+
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      cfg['vlan'] = (cfg['vlan'] == 10) ? 20 : (cfg['vlan'] == 20 ? 30 : 10);
+                    });
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isTrunk ? primaryPurple.withOpacity(0.15) : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isTrunk ? primaryPurple : Colors.grey.shade300,
+                        width: isTrunk ? 2 : 1,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.settings_input_component_rounded,
+                          size: 18,
+                          color: isTrunk ? primaryPurple : Colors.black87,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'P$puerto',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                        ),
+                        Text(
+                          isTrunk ? 'TRUNK' : 'VLAN ${cfg['vlan']}',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            color: isTrunk ? primaryPurple : Colors.teal.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Botón de cierre
+          SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryPurple,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Guardar Configuración'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// --- FORMULARIO EMERGENTE DE DISPOSITIVOS ---
 class _DeviceFormDialog extends StatefulWidget {
   final DeviceModel? dispositivo;
   final VoidCallback onSaved;
@@ -407,10 +621,8 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
           _isLoading = false;
         });
       }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -494,7 +706,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
                 TextFormField(
                   controller: _nombreCtrl,
                   decoration: const InputDecoration(
-                    labelText: 'Nombre del dispositivo',
+                    labelText: 'Nombre del dispositivo (Ej. Switch-Core, PC-Admin)',
                     prefixIcon: Icon(Icons.badge_outlined),
                     border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
@@ -529,7 +741,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
                 TextFormField(
                   controller: _fabCtrl,
                   decoration: const InputDecoration(
-                    labelText: 'Fabricante',
+                    labelText: 'Fabricante (Ej. Cisco, HP, Dell, TP-Link)',
                     prefixIcon: Icon(Icons.precision_manufacturing_outlined),
                     border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                   ),
@@ -599,7 +811,6 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
   }
 }
 
-// Formateador automático para direcciones MAC
 class MacAddressFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
