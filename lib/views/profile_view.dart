@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/supabase_service.dart';
+import 'login_view.dart';
 import 'security_view.dart';
 import 'server_view.dart';
 import 'notifications_view.dart';
@@ -7,10 +9,44 @@ import 'support_view.dart';
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
 
+  Future<void> _cerrarSesion(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cerrar Sesión'),
+        content: const Text('¿Estás seguro de que deseas salir de la bitácora?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Cerrar Sesión'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await SupabaseService().logout();
+
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginView()),
+              (route) => false,
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Se eliminó el appBar interno para que no se duplique el título
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
@@ -85,6 +121,24 @@ class ProfileView extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => const SupportView()),
                 );
               },
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            color: Colors.red.shade50,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: Colors.red.shade200),
+            ),
+            child: ListTile(
+              leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+              title: const Text(
+                'Cerrar Sesión',
+                style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+              ),
+              subtitle: const Text('Salir de la cuenta actual'),
+              onTap: () => _cerrarSesion(context),
             ),
           ),
         ],

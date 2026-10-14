@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
@@ -14,19 +15,115 @@ class SupabaseService {
     await _supabase.auth.resetPasswordForEmail(email);
   }
 
+  // -- HISTORIAL DE AUDITORÍA Y CAMBIOS EN SUPABASE --
+  Future<void> registrarCambio({
+    required String tipo,      // 'red', 'dispositivo', 'vlan'
+    required String accion,    // 'crear', 'editar', 'eliminar'
+    required String titulo,
+    required String detalle,
+    String? nivel,
+  }) async {
+    try {
+      await _supabase.from('historial_cambios').insert({
+        'tipo': tipo,
+        'accion': accion,
+        'titulo': titulo,
+        'detalle': detalle,
+        'nivel': nivel ?? 'info',
+        'usuario': _supabase.auth.currentUser?.email?.split('@').first ?? 'Administrador',
+        'created_at': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('Error al registrar cambio en BD: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getHistorialCambiosHoy() async {
+    try {
+      final now = DateTime.now();
+      final inicioHoy = DateTime(now.year, now.month, now.day);
+
+      final res = await _supabase
+          .from('historial_cambios')
+          .select()
+          .gte('created_at', inicioHoy.toIso8601String())
+          .order('created_at', ascending: false);
+
+      return List<Map<String, dynamic>>.from(res as List);
+    } catch (e) {
+      debugPrint('Error al consultar historial: $e');
+      return [];
+    }
+  }
+
   // -- REDES --
   Future<List<Map<String, dynamic>>> getRedes() async {
     return await _supabase.from('redes').select().order('created_at', ascending: false);
   }
 
-  Future<void> addRed(Map<String, dynamic> data) async =>
-      await _supabase.from('redes').insert(data);
+  Future<void> addRed(Map<String, dynamic> data) async {
+    await _supabase.from('redes').insert(data);
 
-  Future<void> updateRed(String id, Map<String, dynamic> data) async =>
-      await _supabase.from('redes').update(data).eq('id', id);
+    final nombre = data['nombre'] ?? 'Red';
+    final segmento = data['segmento'] ?? '';
 
-  Future<void> deleteRed(String id) async =>
-      await _supabase.from('redes').delete().eq('id', id);
+    await registrarCambio(
+      tipo: 'red',
+      accion: 'crear',
+      titulo: 'Red Creada: $nombre',
+      detalle: 'Segmento CIDR: $segmento',
+    );
+  }
+
+  Future<void> updateRed(String id, Map<String, dynamic> data) async {
+    Map<String, dynamic>? redAnterior;
+    try {
+      redAnterior = await _supabase.from('redes').select().eq('id', id).maybeSingle();
+    } catch (_) {}
+
+    await _supabase.from('redes').update(data).eq('id', id);
+
+    final nombreNuevo = data['nombre'] ?? redAnterior?['nombre'] ?? 'Red';
+    List<String> cambios = [];
+
+    if (redAnterior != null) {
+      if (data.containsKey('segmento') && data['segmento'] != redAnterior['segmento']) {
+        cambios.add('Segmento: ${redAnterior['segmento']} ➔ ${data['segmento']}');
+      }
+      if (data.containsKey('nombre') && data['nombre'] != redAnterior['nombre']) {
+        cambios.add('Nombre: "${redAnterior['nombre']}" ➔ "${data['nombre']}"');
+      }
+    }
+
+    final detalleTxt = cambios.isNotEmpty ? cambios.join(' | ') : 'Parámetros de la red actualizados.';
+
+    await registrarCambio(
+      tipo: 'red',
+      accion: 'editar',
+      titulo: 'Red Modificada: $nombreNuevo',
+      detalle: detalleTxt,
+    );
+  }
+
+  Future<void> deleteRed(String id) async {
+    Map<String, dynamic>? redAnterior;
+    try {
+      redAnterior = await _supabase.from('redes').select().eq('id', id).maybeSingle();
+    } catch (_) {}
+
+    await _supabase.from('redes').delete().eq('id', id);
+
+    final nombre = redAnterior?['nombre'] ?? 'Red';
+    final segmento = redAnterior?['segmento'] ?? '';
+
+    await registrarCambio(
+      tipo: 'red',
+      accion: 'eliminar',
+      titulo: 'Red Eliminada: $nombre',
+      detalle: 'Se dio de baja el segmento $segmento.',
+      nivel: 'advertencia',
+    );
+  }
 
   // -- DISPOSITIVOS --
   Future<List<Map<String, dynamic>>> buscarDispositivos(String query) async {
@@ -44,57 +141,121 @@ class SupabaseService {
         .order('created_at', ascending: false);
   }
 
-  Future<void> addDispositivo(Map<String, dynamic> data) async =>
-      await _supabase.from('dispositivos').insert(data);
+  Future<void> addDispositivo(Map<String, dynamic> data) async {
+    await _supabase.from('dispositivos').insert(data);
 
-  Future<void> updateDispositivo(String id, Map<String, dynamic> data) async =>
-      await _supabase.from('dispositivos').update(data).eq('id', id);
+    final nombre = data['nombre'] ?? 'Equipo';
+    final ip = data['ip'] ?? '-';
+    final mac = data['mac'] ?? '-';
 
-  Future<void> deleteDispositivo(String id) async =>
-      await _supabase.from('dispositivos').delete().eq('id', id);
+    await registrarCambio(
+      tipo: 'dispositivo',
+      accion: 'crear',
+      titulo: 'Dispositivo Agregado: $nombre',
+      detalle: 'IP: $ip | MAC: $mac',
+    );
+  }
+
+  Future<void> updateDispositivo(String id, Map<String, dynamic> data) async {
+    Map<String, dynamic>? dispAnterior;
+    try {
+      dispAnterior = await _supabase.from('dispositivos').select().eq('id', id).maybeSingle();
+    } catch (_) {}
+
+    await _supabase.from('dispositivos').update(data).eq('id', id);
+
+    final nombre = data['nombre'] ?? dispAnterior?['nombre'] ?? 'Equipo';
+    List<String> cambios = [];
+
+    if (dispAnterior != null) {
+      if (data.containsKey('red_id') && data['red_id'] != dispAnterior['red_id']) {
+        cambios.add('Movido de segmento de red');
+      }
+      if (data.containsKey('ip') && data['ip'] != dispAnterior['ip']) {
+        cambios.add('IP cambiada: ${dispAnterior['ip']} ➔ ${data['ip']}');
+      }
+      if (data.containsKey('ubicacion') && data['ubicacion'] != dispAnterior['ubicacion']) {
+        cambios.add('Ubicación: ${data['ubicacion']}');
+      }
+    }
+
+    final detalleTxt = cambios.isNotEmpty ? cambios.join(' | ') : 'Información general del dispositivo actualizada.';
+
+    await registrarCambio(
+      tipo: 'dispositivo',
+      accion: 'editar',
+      titulo: 'Dispositivo Actualizado: $nombre',
+      detalle: detalleTxt,
+    );
+  }
+
+  Future<void> deleteDispositivo(String id) async {
+    Map<String, dynamic>? dispAnterior;
+    try {
+      dispAnterior = await _supabase.from('dispositivos').select().eq('id', id).maybeSingle();
+    } catch (_) {}
+
+    await _supabase.from('dispositivos').delete().eq('id', id);
+
+    final nombre = dispAnterior?['nombre'] ?? 'Equipo';
+    final ip = dispAnterior?['ip'] ?? '-';
+
+    await registrarCambio(
+      tipo: 'dispositivo',
+      accion: 'eliminar',
+      titulo: 'Dispositivo Eliminado: $nombre',
+      detalle: 'Se eliminó el equipo con IP $ip.',
+      nivel: 'advertencia',
+    );
+  }
+
+  // -- VLANS PERSISTENTES EN SUPABASE --
+  Future<List<Map<String, dynamic>>> getVlans() async {
+    try {
+      return await _supabase.from('vlans').select().order('vlan_id', ascending: true);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> addVlan(Map<String, dynamic> data) async {
+    await _supabase.from('vlans').insert(data);
+    await registrarCambio(
+      tipo: 'vlan',
+      accion: 'crear',
+      titulo: 'VLAN Creada: ${data['nombre']}',
+      detalle: 'ID: ${data['vlan_id']} | ${data['descripcion'] ?? ''}',
+    );
+  }
+
+  Future<void> updateVlan(String id, Map<String, dynamic> data) async {
+    await _supabase.from('vlans').update(data).eq('id', id);
+    await registrarCambio(
+      tipo: 'vlan',
+      accion: 'editar',
+      titulo: 'VLAN Modificada: ${data['nombre']}',
+      detalle: 'ID: ${data['vlan_id']} | Configuración actualizada',
+    );
+  }
+
+  Future<void> deleteVlan(String id, String nombre, int vlanId) async {
+    await _supabase.from('vlans').delete().eq('id', id);
+    await registrarCambio(
+      tipo: 'vlan',
+      accion: 'eliminar',
+      titulo: 'VLAN Eliminada: $nombre',
+      detalle: 'Se eliminó la segmentación VLAN ID $vlanId.',
+      nivel: 'advertencia',
+    );
+  }
 
   // -- CONSULTAS DINÁMICAS PARA DASHBOARD --
   Future<Map<String, dynamic>> getDatosDashboard() async {
     final redes = await _supabase.from('redes').select('id, nombre, segmento, created_at');
     final dispositivos = await _supabase.from('dispositivos').select('id, nombre, ip, red_id, created_at');
 
-    final now = DateTime.now();
-    final inicioHoy = DateTime(now.year, now.month, now.day);
+    final historialHoy = await getHistorialCambiosHoy();
 
-    // Calcular cambios recientes (registros creados hoy)
-    int cambiosHoy = 0;
-    List<Map<String, dynamic>> ultimosCambios = [];
-
-    for (var r in redes) {
-      final fecha = DateTime.tryParse(r['created_at'] ?? '');
-      if (fecha != null) {
-        if (fecha.isAfter(inicioHoy)) cambiosHoy++;
-        ultimosCambios.add({
-          'titulo': 'Red creada: ${r['nombre']}',
-          'subtitulo': 'Segmento: ${r['segmento']}',
-          'fecha': fecha,
-          'tipo': 'red',
-        });
-      }
-    }
-
-    for (var d in dispositivos) {
-      final fecha = DateTime.tryParse(d['created_at'] ?? '');
-      if (fecha != null) {
-        if (fecha.isAfter(inicioHoy)) cambiosHoy++;
-        ultimosCambios.add({
-          'titulo': 'Dispositivo añadido: ${d['nombre']}',
-          'subtitulo': 'IP: ${d['ip']}',
-          'fecha': fecha,
-          'tipo': 'dispositivo',
-        });
-      }
-    }
-
-    // Ordenar los últimos cambios cronológicamente
-    ultimosCambios.sort((a, b) => (b['fecha'] as DateTime).compareTo(a['fecha'] as DateTime));
-
-    // Generación dinámica de Notificaciones según el estado real de la BD
     List<Map<String, String>> notificaciones = [];
 
     final redesSinEquipos = redes.where((r) {
@@ -103,22 +264,22 @@ class SupabaseService {
 
     if (redesSinEquipos.isNotEmpty) {
       notificaciones.add({
-        'titulo': 'Redes sin dispositivos asignados',
-        'detalle': 'Hay ${redesSinEquipos.length} red(es) sin equipos registrados.',
+        'titulo': 'Redes sin equipos asignados',
+        'detalle': 'Hay ${redesSinEquipos.length} red(es) configurada(s) sin dispositivos vinculados.',
         'nivel': 'advertencia',
       });
     }
 
     if (dispositivos.isEmpty) {
       notificaciones.add({
-        'titulo': 'Sin dispositivos registrados',
-        'detalle': 'Aún no has registrado ningún equipo en la bitácora.',
+        'titulo': 'Sin dispositivos en bitácora',
+        'detalle': 'Aún no se han registrado equipos en la infraestructura.',
         'nivel': 'info',
       });
     } else {
       notificaciones.add({
-        'titulo': 'Infraestructura activa',
-        'detalle': 'Se están monitoreando ${dispositivos.length} dispositivos en ${redes.length} redes.',
+        'titulo': 'Estado de Infraestructura',
+        'detalle': 'Operando ${dispositivos.length} dispositivo(s) en ${redes.length} red(es).',
         'nivel': 'ok',
       });
     }
@@ -126,10 +287,9 @@ class SupabaseService {
     return {
       'totalRedes': redes.length,
       'totalDispositivos': dispositivos.length,
-      'cambiosHoy': cambiosHoy,
+      'cambiosHoy': historialHoy.length,
       'notificaciones': notificaciones,
-      'ultimosCambios': ultimosCambios.take(5).toList(),
-      'redesLista': redes,
+      'ultimosCambios': historialHoy,
     };
   }
 }

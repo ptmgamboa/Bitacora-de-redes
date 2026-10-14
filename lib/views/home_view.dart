@@ -16,16 +16,6 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView> {
   int _selectedIndex = 0;
 
-  static final List<Widget> _widgetOptions = <Widget>[
-    const DashboardView(),
-    const NetworksView(),
-    const DevicesView(),
-    const VlansView(),
-    const ReportsView(),
-    const ProfileView(),
-  ];
-
-  // Títulos dinámicos y centrados para el AppBar superior
   static const List<String> _titulos = <String>[
     'Inicio',
     'Bitácora de Redes',
@@ -45,6 +35,17 @@ class _HomeViewState extends State<HomeView> {
   Widget build(BuildContext context) {
     const primaryPurple = Color(0xFF673AB7);
 
+    final List<Widget> widgetOptions = <Widget>[
+      DashboardView(
+        onNavigateTab: (index) => _onItemTapped(index),
+      ),
+      const NetworksView(),
+      const DevicesView(),
+      const VlansView(),
+      const ReportsView(),
+      const ProfileView(),
+    ];
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -61,7 +62,7 @@ class _HomeViewState extends State<HomeView> {
       ),
       body: IndexedStack(
         index: _selectedIndex,
-        children: _widgetOptions,
+        children: widgetOptions,
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
