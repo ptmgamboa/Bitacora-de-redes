@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/app_colors.dart';
 import '../services/supabase_service.dart';
 import 'home_view.dart';
 
@@ -38,8 +39,8 @@ class _LoginViewState extends State<LoginView> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Error: Revise sus credenciales'),
-            backgroundColor: Colors.redAccent,
+            content: Text('Error: Revise sus credenciales de acceso'),
+            backgroundColor: AppColors.statusCritical,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -49,7 +50,6 @@ class _LoginViewState extends State<LoginView> {
     }
   }
 
-  // Diálogo para recuperar contraseña
   void _mostrarDialogoRecuperacion() {
     final resetEmailCtrl = TextEditingController(text: _emailCtrl.text.trim());
     final resetFormKey = GlobalKey<FormState>();
@@ -60,12 +60,13 @@ class _LoginViewState extends State<LoginView> {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            backgroundColor: AppColors.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: const Row(
               children: [
-                Icon(Icons.lock_reset_rounded, color: Color(0xFF1565C0)),
-                SizedBox(width: 8),
-                Text('Recuperar Contraseña', style: TextStyle(fontSize: 18)),
+                Icon(Icons.lock_reset_rounded, color: AppColors.primary),
+                SizedBox(width: 10),
+                Text('Recuperar Acceso', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
             content: Form(
@@ -74,9 +75,9 @@ class _LoginViewState extends State<LoginView> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Ingrese su correo electrónico para recibir un enlace de restablecimiento.',
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                  const Text(
+                    'Ingrese su correo registrado para recibir las instrucciones de restablecimiento.',
+                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -84,10 +85,7 @@ class _LoginViewState extends State<LoginView> {
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
                       labelText: 'Correo Electrónico',
-                      prefixIcon: Icon(Icons.email_outlined, size: 20),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(12)),
-                      ),
+                      prefixIcon: Icon(Icons.email_outlined, color: AppColors.primary),
                     ),
                     validator: (val) =>
                     val == null || val.trim().isEmpty ? 'Ingrese su correo' : null,
@@ -98,7 +96,7 @@ class _LoginViewState extends State<LoginView> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancelar'),
+                child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
               ),
               isSending
                   ? const Padding(
@@ -106,13 +104,14 @@ class _LoginViewState extends State<LoginView> {
                 child: SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
                 ),
               )
                   : ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1565C0),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: () async {
                   if (!resetFormKey.currentState!.validate()) return;
@@ -125,7 +124,7 @@ class _LoginViewState extends State<LoginView> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Enlace de recuperación enviado a su correo'),
-                          backgroundColor: Colors.green,
+                          backgroundColor: AppColors.statusActive,
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -136,14 +135,14 @@ class _LoginViewState extends State<LoginView> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Error: $e'),
-                          backgroundColor: Colors.redAccent,
+                          backgroundColor: AppColors.statusCritical,
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
                     }
                   }
                 },
-                child: const Text('Enviar'),
+                child: const Text('Enviar Enlace'),
               ),
             ],
           );
@@ -154,192 +153,239 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryBlue = Color(0xFF1565C0);
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Logo / Icono principal
-                  Container(
-                    width: 90,
-                    height: 90,
-                    decoration: BoxDecoration(
-                      color: primaryBlue.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.router_rounded,
-                      size: 48,
-                      color: primaryBlue,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+      backgroundColor: AppColors.background,
+      body: Stack(
+        children: [
+          // Fondo Superior en Gradiente Corporativo
+          Container(
+            height: MediaQuery.of(context).size.height * 0.38,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppColors.primaryDark, AppColors.primary, AppColors.secondary],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+            ),
+          ),
 
-                  // Títulos institucionales
-                  const Text(
-                    'Bitacora.Net',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1F2937),
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Sistema de Administración de Infraestructura de Red',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 36),
-
-                  // Tarjeta contenedora de formulario
-                  Container(
-                    padding: const EdgeInsets.all(20.0),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade200),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Iniciar Sesión',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F2937),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Campo Correo Electrónico
-                        TextFormField(
-                          controller: _emailCtrl,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(
-                            labelText: 'Correo Electrónico',
-                            hintText: 'ejemplo@itsu.edu.mx',
-                            prefixIcon: Icon(Icons.email_outlined, size: 20),
-                          ),
-                          validator: (val) =>
-                          val == null || val.trim().isEmpty ? 'Requerido' : null,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Campo Contraseña
-                        TextFormField(
-                          controller: _passCtrl,
-                          obscureText: _obscurePassword,
-                          decoration: InputDecoration(
-                            labelText: 'Contraseña',
-                            hintText: '••••••••',
-                            prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
-                                size: 20,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // ÍCONO DE BRANDING CON GLOW
+                      Container(
+                        width: 100,
+                        height: 100,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.15),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
                             ),
-                          ),
-                          validator: (val) =>
-                          val == null || val.trim().isEmpty ? 'Requerido' : null,
+                          ],
                         ),
-                        const SizedBox(height: 8),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.hub_rounded,
+                            size: 48,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
 
-                        // Botón ¿Olvidaste tu contraseña?
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: _mostrarDialogoRecuperacion,
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              minimumSize: const Size(0, 30),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: const Text(
-                              '¿Olvidaste tu contraseña?',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: primaryBlue,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
+                      // TÍTULO Y SUBTÍTULO
+                      const Text(
+                        'Bitacora.Net',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: -0.5,
                         ),
-                        const SizedBox(height: 16),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Administración de Infraestructura de Red',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white.withOpacity(0.85),
+                        ),
+                      ),
+                      const SizedBox(height: 28),
 
-                        // Botón Iniciar Sesión / Indicator
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: ElevatedButton(
-                            onPressed: _isLoading ? null : _iniciarSesion,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryBlue,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                      // TARJETA DE FORMULARIO
+                      Container(
+                        padding: const EdgeInsets.all(24.0),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: AppColors.border),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  width: 4,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Iniciar Sesión',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Campo Correo Electrónico
+                            TextFormField(
+                              controller: _emailCtrl,
+                              keyboardType: TextInputType.emailAddress,
+                              decoration: const InputDecoration(
+                                labelText: 'Correo Electrónico',
+                                hintText: 'ejemplo@itsu.edu.mx',
+                                prefixIcon: Icon(Icons.email_outlined, color: AppColors.primary),
+                              ),
+                              validator: (val) =>
+                              val == null || val.trim().isEmpty ? 'Ingrese su correo' : null,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Campo Contraseña
+                            TextFormField(
+                              controller: _passCtrl,
+                              obscureText: _obscurePassword,
+                              decoration: InputDecoration(
+                                labelText: 'Contraseña',
+                                hintText: '••••••••',
+                                prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primary),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_outlined
+                                        : Icons.visibility_off_outlined,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                ),
+                              ),
+                              validator: (val) =>
+                              val == null || val.trim().isEmpty ? 'Ingrese su contraseña' : null,
+                            ),
+                            const SizedBox(height: 8),
+
+                            // Olvidaste tu contraseña
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: _mostrarDialogoRecuperacion,
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: const Size(0, 30),
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: const Text(
+                                  '¿Olvidaste tu contraseña?',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ),
-                            child: _isLoading
-                                ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
+                            const SizedBox(height: 20),
+
+                            // Botón Iniciar Sesión
+                            SizedBox(
+                              width: double.infinity,
+                              height: 50,
+                              child: ElevatedButton(
+                                onPressed: _isLoading ? null : _iniciarSesion,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  elevation: 2,
+                                ),
+                                child: _isLoading
+                                    ? const SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: Colors.white,
+                                  ),
+                                )
+                                    : const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text('Ingresar al Sistema', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                                    SizedBox(width: 8),
+                                    Icon(Icons.arrow_forward_rounded, size: 18),
+                                  ],
+                                ),
                               ),
-                            )
-                                : const Text('Iniciar Sesión'),
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 32),
+
+                      Text(
+                        '© 2026 Instituto Tecnológico Superior de Uruapan',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary.withOpacity(0.8),
+                        ),
+                      ),
+                    ],
                   ),
-
-                  const SizedBox(height: 32),
-                  Text(
-                    '© 2026 Instituto Tecnológico Superior de Uruapan',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade500,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -57,19 +57,19 @@ class _ReportsViewState extends State<ReportsView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- BANNER SUPERIOR DE INFORMES ---
+            // BANNER SUPERIOR DE INFORMES EN GRADIENTE
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [AppColors.primary, AppColors.secondary],
+                  colors: [AppColors.primaryDark, AppColors.primary],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withOpacity(0.25),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -83,7 +83,7 @@ class _ReportsViewState extends State<ReportsView> {
                       color: Colors.white.withOpacity(0.2),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.picture_as_pdf_rounded, color: Colors.white, size: 30),
+                    child: const Icon(Icons.picture_as_pdf_rounded, color: Colors.white, size: 28),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -108,7 +108,7 @@ class _ReportsViewState extends State<ReportsView> {
 
             const SizedBox(height: 16),
 
-            // --- METRICAS RÁPIDAS ---
+            // MÉTRICAS RÁPIDAS
             Row(
               children: [
                 _buildMetricTile('Redes', '${_metrics['totalRedes'] ?? 0}', Icons.hub_outlined, AppColors.primary),
@@ -123,7 +123,7 @@ class _ReportsViewState extends State<ReportsView> {
 
             const SizedBox(height: 16),
 
-            // --- VISUALIZADOR PREVIO DEL PDF ---
+            // VISUALIZADOR PREVIO DEL PDF
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -137,7 +137,7 @@ class _ReportsViewState extends State<ReportsView> {
                     build: (format) => _reportService.generarReportePdfCompleto(),
                     allowPrinting: true,
                     allowSharing: true,
-                    canDebug: false, // <-- Desactiva el interruptor de depuración verde
+                    canDebug: false,
                     canChangeOrientation: false,
                     canChangePageFormat: false,
                     pdfFileName: 'Reporte_Infraestructura_Red.pdf',

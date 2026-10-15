@@ -15,7 +15,7 @@ class SupabaseService {
     await _supabase.auth.resetPasswordForEmail(email);
   }
 
-  // -- HISTORIAL DE AUDITORÍA Y CAMBIOS EN SUPABASE --
+  // -- HISTORIAL DE AUDITORÍA Y CAMBIOS CON CONVERSIÓN CORRECTA A HORA LOCAL --
   Future<void> registrarCambio({
     required String tipo,      // 'red', 'dispositivo', 'vlan'
     required String accion,    // 'crear', 'editar', 'eliminar'
@@ -31,10 +31,20 @@ class SupabaseService {
         'detalle': detalle,
         'nivel': nivel ?? 'info',
         'usuario': _supabase.auth.currentUser?.email?.split('@').first ?? 'Administrador',
-        'created_at': DateTime.now().toIso8601String(),
+        'created_at': DateTime.now().toUtc().toIso8601String(),
       });
     } catch (e) {
       debugPrint('Error al registrar cambio en BD: $e');
+    }
+  }
+
+  // ELIMINAR UN REGISTRO INDIVIDUAL DEL HISTORIAL
+  Future<void> deleteHistorialCambio(String id) async {
+    try {
+      await _supabase.from('historial_cambios').delete().eq('id', id);
+    } catch (e) {
+      debugPrint('Error al eliminar registro del historial: $e');
+      rethrow;
     }
   }
 
@@ -45,26 +55,62 @@ class SupabaseService {
           .select()
           .order('created_at', ascending: false);
 
-      List<Map<String, dynamic>> lista = List<Map<String, dynamic>>.from(res as List);
+      List<Map<String, dynamic>> rawLista = List<Map<String, dynamic>>.from(res as List);
 
-      for (var item in lista) {
-        final dt = DateTime.tryParse(item['created_at']?.toString() ?? '')?.toLocal();
+      final ahora = DateTime.now();
+      final inicioHoy = DateTime(ahora.year, ahora.month, ahora.day);
+      final inicioAyer = inicioHoy.subtract(const Duration(days: 1));
+
+      for (var item in rawLista) {
+        final rawDate = item['created_at']?.toString() ?? '';
+        DateTime? dt;
+
+        if (rawDate.isNotEmpty) {
+          final cleanDate = rawDate.replaceAll(' ', 'T');
+          // Garantizamos la conversión desde UTC a la hora local exacta del dispositivo
+          if (cleanDate.endsWith('Z') || cleanDate.contains('+') || RegExp(r'-\d{2}:?\d{2}$').hasMatch(cleanDate)) {
+            dt = DateTime.tryParse(cleanDate)?.toLocal();
+          } else {
+            dt = DateTime.tryParse('${cleanDate}Z')?.toLocal();
+          }
+        }
+
         if (dt != null) {
+          item['parsed_dt'] = dt;
+          final hora = dt.hour.toString().padLeft(2, '0');
+          final min = dt.minute.toString().padLeft(2, '0');
           final dia = dt.day.toString().padLeft(2, '0');
           final mes = dt.month.toString().padLeft(2, '0');
           final anio = dt.year;
-          final hora = dt.hour.toString().padLeft(2, '0');
-          final min = dt.minute.toString().padLeft(2, '0');
 
-          item['fecha_formateada'] = '$dia/$mes/$anio $hora:$min';
-          item['fecha'] = '$dia/$mes/$anio';
           item['hora'] = '$hora:$min';
+          item['fecha'] = '$dia/$mes/$anio';
+          item['fecha_formateada'] = '$dia/$mes/$anio $hora:$min';
+
+          // Asignación estricta de grupos
+          if (dt.isAfter(inicioHoy)) {
+            item['grupo'] = 'Hoy';
+          } else if (dt.isAfter(inicioAyer) && dt.isBefore(inicioHoy)) {
+            item['grupo'] = 'Ayer';
+          } else {
+            item['grupo'] = '$dia/$mes/$anio';
+          }
         } else {
+          item['parsed_dt'] = DateTime(2000);
+          item['grupo'] = 'Anteriores';
+          item['hora'] = '--:--';
           item['fecha_formateada'] = '--/--/---- --:--';
         }
       }
 
-      return lista;
+      // Ordenar estrictamente por fecha/hora local más reciente arriba
+      rawLista.sort((a, b) {
+        final dtA = a['parsed_dt'] as DateTime;
+        final dtB = b['parsed_dt'] as DateTime;
+        return dtB.compareTo(dtA);
+      });
+
+      return rawLista;
     } catch (e) {
       debugPrint('Error al consultar historial: $e');
       return [];
@@ -77,7 +123,6 @@ class SupabaseService {
   }
 
   Future<void> addRed(Map<String, dynamic> data) async {
-    // Solamente enviamos columnas existentes en la tabla 'redes'
     final payload = <String, dynamic>{
       'nombre': data['nombre'],
       'segmento': data['segmento'],
@@ -287,15 +332,9 @@ class SupabaseService {
     final redes = await _supabase.from('redes').select('id, nombre, segmento, created_at');
     final dispositivos = await _supabase.from('dispositivos').select('id, nombre, ip, red_id, created_at');
 
-    final historialHoy = await getHistorialCambiosHoy();
+    final historial = await getHistorialCambiosHoy();
 
-    final now = DateTime.now();
-    final hoyStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-
-    final cambiosHoyCount = historialHoy.where((h) {
-      final ca = h['created_at']?.toString() ?? '';
-      return ca.startsWith(hoyStr);
-    }).length;
+    final cambiosHoyCount = historial.where((h) => h['grupo'] == 'Hoy').length;
 
     List<Map<String, String>> notificaciones = [];
 
@@ -328,9 +367,9 @@ class SupabaseService {
     return {
       'totalRedes': redes.length,
       'totalDispositivos': dispositivos.length,
-      'cambiosHoy': cambiosHoyCount > 0 ? cambiosHoyCount : historialHoy.length,
+      'cambiosHoy': cambiosHoyCount,
       'notificaciones': notificaciones,
-      'ultimosCambios': historialHoy,
+      'ultimosCambios': historial,
     };
   }
 }

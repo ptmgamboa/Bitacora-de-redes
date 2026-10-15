@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/app_colors.dart';
 import '../models/network_model.dart';
 import '../models/device_model.dart';
 import '../services/supabase_service.dart';
@@ -58,7 +59,7 @@ class _VlansViewState extends State<VlansView> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar VLANs: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error al cargar VLANs: $e'), backgroundColor: AppColors.statusCritical),
         );
       }
     } finally {
@@ -96,14 +97,14 @@ class _VlansViewState extends State<VlansView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('VLAN "${vlan['nombre']}" marcada como $nuevoEstado'),
-            backgroundColor: nuevoEstado == 'Activa' ? Colors.green : Colors.orange,
+            backgroundColor: nuevoEstado == 'Activa' ? AppColors.statusActive : AppColors.statusWarning,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cambiar estado de VLAN: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error al cambiar estado de VLAN: $e'), backgroundColor: AppColors.statusCritical),
         );
       }
     }
@@ -144,12 +145,13 @@ class _VlansViewState extends State<VlansView> {
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
+            backgroundColor: AppColors.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
             title: Row(
               children: [
-                const Icon(Icons.alt_route_rounded, color: Color(0xFF673AB7)),
+                const Icon(Icons.alt_route_rounded, color: AppColors.primary),
                 const SizedBox(width: 8),
-                Text(isEditing ? 'Editar VLAN' : 'Nueva VLAN'),
+                Text(isEditing ? 'Editar VLAN' : 'Nueva VLAN', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
               ],
             ),
             content: SizedBox(
@@ -165,8 +167,7 @@ class _VlansViewState extends State<VlansView> {
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
                         labelText: 'ID de VLAN (Ej. 10, 20, 30)',
-                        prefixIcon: Icon(Icons.tag_rounded),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                        prefixIcon: Icon(Icons.tag_rounded, color: AppColors.primary),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -175,22 +176,21 @@ class _VlansViewState extends State<VlansView> {
                       decoration: const InputDecoration(
                         labelText: 'Nombre de la VLAN',
                         hintText: 'Ej. VLAN_ADMIN',
-                        prefixIcon: Icon(Icons.label_outlined),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                        prefixIcon: Icon(Icons.label_outlined, color: AppColors.primary),
                       ),
                     ),
                     const SizedBox(height: 16),
 
                     const Text(
                       'Agregue la red o redes que desea asociar:',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1F2937)),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
                     ),
                     const SizedBox(height: 8),
 
                     Container(
                       constraints: const BoxConstraints(maxHeight: 160),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
+                        border: Border.all(color: AppColors.border),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: _redesDisponibles.isEmpty
@@ -198,7 +198,7 @@ class _VlansViewState extends State<VlansView> {
                         padding: EdgeInsets.all(12.0),
                         child: Text(
                           'No hay redes registradas para seleccionar.',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                         ),
                       )
                           : ListView(
@@ -207,9 +207,9 @@ class _VlansViewState extends State<VlansView> {
                           final isSelected = selectedRedIds.contains(r.id);
                           return CheckboxListTile(
                             dense: true,
-                            activeColor: const Color(0xFF673AB7),
-                            title: Text(r.nombre, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                            subtitle: Text(r.segmento, style: const TextStyle(fontSize: 11)),
+                            activeColor: AppColors.primary,
+                            title: Text(r.nombre, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
+                            subtitle: Text(r.segmento, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                             value: isSelected,
                             onChanged: (bool? checked) {
                               setDialogState(() {
@@ -232,8 +232,7 @@ class _VlansViewState extends State<VlansView> {
                       controller: descCtrl,
                       decoration: const InputDecoration(
                         labelText: 'Descripción / Propósito',
-                        prefixIcon: Icon(Icons.description_outlined),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                        prefixIcon: Icon(Icons.description_outlined, color: AppColors.primary),
                       ),
                     ),
                   ],
@@ -243,11 +242,11 @@ class _VlansViewState extends State<VlansView> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancelar'),
+                child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF673AB7),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                 ),
@@ -257,7 +256,7 @@ class _VlansViewState extends State<VlansView> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Por favor, agregue al menos una red'),
-                        backgroundColor: Colors.orange,
+                        backgroundColor: AppColors.statusWarning,
                       ),
                     );
                     return;
@@ -302,7 +301,7 @@ class _VlansViewState extends State<VlansView> {
                           content: Text(isEditing
                               ? 'VLAN actualizada correctamente'
                               : 'Segmentación VLAN agregada correctamente'),
-                          backgroundColor: Colors.green,
+                          backgroundColor: AppColors.statusActive,
                         ),
                       );
                     }
@@ -311,7 +310,7 @@ class _VlansViewState extends State<VlansView> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Error al guardar VLAN: $e'),
-                          backgroundColor: Colors.red,
+                          backgroundColor: AppColors.statusCritical,
                         ),
                       );
                     }
@@ -333,9 +332,12 @@ class _VlansViewState extends State<VlansView> {
         title: const Text('Eliminar VLAN'),
         content: Text('¿Deseas eliminar la segmentación "${vlan['nombre']}" (ID ${vlan['vlan_id']})?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.statusCritical, foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Eliminar'),
           ),
@@ -353,13 +355,13 @@ class _VlansViewState extends State<VlansView> {
         _cargarDatos();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('VLAN eliminada correctamente'), backgroundColor: Colors.green),
+            const SnackBar(content: Text('VLAN eliminada correctamente'), backgroundColor: AppColors.statusActive),
           );
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al eliminar VLAN: $e'), backgroundColor: Colors.red),
+            SnackBar(content: Text('Error al eliminar VLAN: $e'), backgroundColor: AppColors.statusCritical),
           );
         }
       }
@@ -368,8 +370,6 @@ class _VlansViewState extends State<VlansView> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF673AB7);
-
     final vlansFiltradas = _vlans.where((v) {
       final nombre = v['nombre'].toString().toLowerCase();
       final desc = v['descripcion'].toString().toLowerCase();
@@ -378,7 +378,7 @@ class _VlansViewState extends State<VlansView> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5FA),
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           Padding(
@@ -387,45 +387,49 @@ class _VlansViewState extends State<VlansView> {
               controller: _searchCtrl,
               decoration: InputDecoration(
                 hintText: 'Buscar por ID, Nombre de VLAN o Descripción...',
-                prefixIcon: const Icon(Icons.search, color: primaryColor),
+                prefixIcon: const Icon(Icons.search, color: AppColors.primary),
                 suffixIcon: _searchCtrl.text.isNotEmpty
                     ? IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.grey),
+                  icon: const Icon(Icons.clear, color: AppColors.textSecondary),
                   onPressed: () => _searchCtrl.clear(),
                 )
                     : null,
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppColors.surface,
                 contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14.0),
-                  borderSide: BorderSide.none,
+                  borderSide: const BorderSide(color: AppColors.border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14.0),
+                  borderSide: const BorderSide(color: AppColors.border),
                 ),
               ),
             ),
           ),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: primaryColor))
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
                 : vlansFiltradas.isEmpty
                 ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.alt_route_rounded, size: 70, color: Colors.grey.shade400),
+                  Icon(Icons.alt_route_rounded, size: 70, color: AppColors.textSecondary.withOpacity(0.5)),
                   const SizedBox(height: 12),
                   Text(
                     _searchQuery.isEmpty
                         ? 'No hay segmentaciones de VLAN registradas.'
                         : 'No se encontraron coincidencias.',
-                    style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                    style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
                   ),
                 ],
               ),
             )
                 : RefreshIndicator(
               onRefresh: _cargarDatos,
-              color: primaryColor,
+              color: AppColors.primary,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
                 itemCount: vlansFiltradas.length,
@@ -440,11 +444,12 @@ class _VlansViewState extends State<VlansView> {
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12.0),
                     decoration: BoxDecoration(
-                      color: esActiva ? Colors.white : Colors.grey.shade100,
+                      color: esActiva ? AppColors.surface : AppColors.background,
                       borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withOpacity(0.03),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
@@ -471,7 +476,7 @@ class _VlansViewState extends State<VlansView> {
                                   width: 48,
                                   height: 48,
                                   decoration: BoxDecoration(
-                                    color: (esActiva ? primaryColor : Colors.grey).withOpacity(0.1),
+                                    color: (esActiva ? AppColors.primary : AppColors.textSecondary).withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Column(
@@ -479,11 +484,11 @@ class _VlansViewState extends State<VlansView> {
                                     children: [
                                       Text(
                                         'VLAN',
-                                        style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: esActiva ? primaryColor : Colors.grey),
+                                        style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: esActiva ? AppColors.primary : AppColors.textSecondary),
                                       ),
                                       Text(
                                         '${vlan['vlan_id'] ?? ''}',
-                                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: esActiva ? primaryColor : Colors.grey),
+                                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: esActiva ? AppColors.primary : AppColors.textSecondary),
                                       ),
                                     ],
                                   ),
@@ -498,7 +503,7 @@ class _VlansViewState extends State<VlansView> {
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14,
-                                          color: esActiva ? Colors.black87 : Colors.grey.shade600,
+                                          color: esActiva ? AppColors.textPrimary : AppColors.textSecondary,
                                           decoration: esActiva ? null : TextDecoration.lineThrough,
                                         ),
                                         overflow: TextOverflow.ellipsis,
@@ -506,7 +511,7 @@ class _VlansViewState extends State<VlansView> {
                                       const SizedBox(height: 2),
                                       Text(
                                         '${redesAsignadas.length} Red(es) vinculada(s)',
-                                        style: TextStyle(fontSize: 11, color: esActiva ? primaryColor : Colors.grey, fontWeight: FontWeight.w600),
+                                        style: TextStyle(fontSize: 11, color: esActiva ? AppColors.primary : AppColors.textSecondary, fontWeight: FontWeight.w600),
                                       ),
                                     ],
                                   ),
@@ -520,7 +525,7 @@ class _VlansViewState extends State<VlansView> {
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                         decoration: BoxDecoration(
-                                          color: esActiva ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.15),
+                                          color: esActiva ? AppColors.statusActiveBg : AppColors.statusWarningBg,
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: Text(
@@ -528,7 +533,7 @@ class _VlansViewState extends State<VlansView> {
                                           style: TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
-                                            color: esActiva ? Colors.green.shade800 : Colors.orange.shade900,
+                                            color: esActiva ? AppColors.statusActive : AppColors.statusWarning,
                                           ),
                                         ),
                                       ),
@@ -537,18 +542,18 @@ class _VlansViewState extends State<VlansView> {
                                     IconButton(
                                       constraints: const BoxConstraints(),
                                       padding: const EdgeInsets.all(4),
-                                      icon: const Icon(Icons.edit_outlined, color: Colors.blueAccent, size: 20),
+                                      icon: const Icon(Icons.edit_outlined, color: AppColors.secondary, size: 20),
                                       onPressed: () => _abrirFormularioVlan(vlan),
                                     ),
                                     IconButton(
                                       constraints: const BoxConstraints(),
                                       padding: const EdgeInsets.all(4),
-                                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                                      icon: const Icon(Icons.delete_outline, color: AppColors.statusCritical, size: 20),
                                       onPressed: () => _eliminarVlan(vlan),
                                     ),
                                     Icon(
                                       isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-                                      color: Colors.grey.shade600,
+                                      color: AppColors.textSecondary,
                                     ),
                                   ],
                                 ),
@@ -558,11 +563,11 @@ class _VlansViewState extends State<VlansView> {
                         ),
 
                         if (isExpanded) ...[
-                          const Divider(height: 1),
+                          const Divider(height: 1, color: AppColors.border),
                           Container(
                             padding: const EdgeInsets.all(12.0),
                             decoration: const BoxDecoration(
-                              color: Color(0xFFFAF9FC),
+                              color: AppColors.background,
                               borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
                             ),
                             child: Column(
@@ -573,16 +578,16 @@ class _VlansViewState extends State<VlansView> {
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.black54,
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
                                 if (redesAsignadas.isEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8.0),
                                     child: Text(
                                       'No hay redes asociadas a esta VLAN.',
-                                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+                                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontStyle: FontStyle.italic),
                                     ),
                                   )
                                 else
@@ -594,13 +599,13 @@ class _VlansViewState extends State<VlansView> {
                                         margin: const EdgeInsets.only(bottom: 6.0),
                                         padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
                                         decoration: BoxDecoration(
-                                          color: Colors.white,
+                                          color: AppColors.surface,
                                           borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(color: Colors.grey.shade200),
+                                          border: Border.all(color: AppColors.border),
                                         ),
                                         child: Row(
                                           children: [
-                                            const Icon(Icons.hub_outlined, color: primaryColor, size: 18),
+                                            const Icon(Icons.hub_outlined, color: AppColors.primary, size: 18),
                                             const SizedBox(width: 8),
                                             Expanded(
                                               child: Column(
@@ -608,11 +613,11 @@ class _VlansViewState extends State<VlansView> {
                                                 children: [
                                                   Text(
                                                     red.nombre,
-                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
                                                   ),
                                                   Text(
                                                     red.segmento,
-                                                    style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: Colors.grey),
+                                                    style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: AppColors.textSecondary),
                                                   ),
                                                 ],
                                               ),
@@ -620,12 +625,12 @@ class _VlansViewState extends State<VlansView> {
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                               decoration: BoxDecoration(
-                                                color: primaryColor.withOpacity(0.08),
+                                                color: AppColors.primary.withOpacity(0.08),
                                                 borderRadius: BorderRadius.circular(8),
                                               ),
                                               child: Text(
                                                 '$numEquipos equipos',
-                                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primaryColor),
+                                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary),
                                               ),
                                             ),
                                           ],
@@ -648,7 +653,7 @@ class _VlansViewState extends State<VlansView> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'btn_vlans_view_fab',
-        backgroundColor: primaryColor,
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         onPressed: () => _abrirFormularioVlan(),
         icon: const Icon(Icons.add),

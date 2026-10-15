@@ -78,7 +78,7 @@ class _DevicesViewState extends State<DevicesView> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -278,7 +278,7 @@ class _DevicesViewState extends State<DevicesView> {
                                         borderRadius: BorderRadius.circular(8),
                                         child: _buildBadge(
                                           icon: d.esActivo ? Icons.check_circle_rounded : Icons.pause_circle_filled_rounded,
-                                          text: d.esActivo ? 'ACTIVE' : 'CRITICAL',
+                                          text: d.esActivo ? 'ACTIVO' : 'INACTIVO',
                                           bgColor: d.esActivo ? AppColors.statusActiveBg : AppColors.statusCriticalBg,
                                           textColor: d.esActivo ? AppColors.statusActive : AppColors.statusCritical,
                                         ),

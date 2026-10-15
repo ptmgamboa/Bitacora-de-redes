@@ -80,8 +80,7 @@ class _NetworksViewState extends State<NetworksView> {
     } else {
       _redesFiltradas = _todasLasRedes.where((r) {
         return r.nombre.toLowerCase().contains(_searchQuery) ||
-            r.segmento.toLowerCase().contains(_searchQuery) ||
-            r.vlan.toLowerCase().contains(_searchQuery);
+            r.segmento.toLowerCase().contains(_searchQuery);
       }).toList();
     }
   }
@@ -159,7 +158,6 @@ class _NetworksViewState extends State<NetworksView> {
     }
   }
 
-  // --- ABRIR FORMULARIO CREAR / EDITAR RED ---
   void _abrirFormulario([NetworkModel? red]) {
     showDialog(
       context: context,
@@ -176,13 +174,12 @@ class _NetworksViewState extends State<NetworksView> {
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          // --- BARRA DE BÚSQUEDA ---
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               controller: _searchCtrl,
               decoration: InputDecoration(
-                hintText: 'Buscar por Nombre, Segmento CIDR o VLAN...',
+                hintText: 'Buscar por Nombre o Segmento CIDR...',
                 prefixIcon: const Icon(Icons.search, color: AppColors.primary),
                 suffixIcon: _searchCtrl.text.isNotEmpty
                     ? IconButton(
@@ -205,7 +202,6 @@ class _NetworksViewState extends State<NetworksView> {
             ),
           ),
 
-          // --- LISTADO DE REDES ---
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
@@ -339,13 +335,6 @@ class _NetworksViewState extends State<NetworksView> {
                                 visualDensity: VisualDensity.compact,
                               ),
                               Chip(
-                                avatar: const Icon(Icons.alt_route, size: 14, color: AppColors.secondary),
-                                label: Text('VLAN ${red.vlan}', style: const TextStyle(fontSize: 12)),
-                                backgroundColor: AppColors.secondary.withOpacity(0.08),
-                                side: BorderSide.none,
-                                visualDensity: VisualDensity.compact,
-                              ),
-                              Chip(
                                 avatar: const Icon(Icons.devices, size: 14, color: AppColors.switchNet),
                                 label: Text('${equipos.length} Equipos', style: const TextStyle(fontSize: 12)),
                                 backgroundColor: AppColors.switchNet.withOpacity(0.08),
@@ -365,7 +354,6 @@ class _NetworksViewState extends State<NetworksView> {
         ],
       ),
 
-      // --- BOTÓN FLOTANTE PARA AGREGAR RED ---
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'btn_networks_view_fab',
         backgroundColor: AppColors.primary,
@@ -378,7 +366,7 @@ class _NetworksViewState extends State<NetworksView> {
   }
 }
 
-// --- FORMULARIO CREAR / EDITAR RED ---
+// --- FORMULARIO CON VALIDACIÓN DE MÁSCARA CIDR ---
 class _NetworkFormDialog extends StatefulWidget {
   final NetworkModel? red;
   final VoidCallback onSaved;
@@ -393,7 +381,6 @@ class _NetworkFormDialogState extends State<_NetworkFormDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nombreCtrl = TextEditingController();
   final _segmentoCtrl = TextEditingController();
-  final _vlanCtrl = TextEditingController();
   String _selectedEstado = 'Activa';
   bool _isSaving = false;
 
@@ -403,7 +390,6 @@ class _NetworkFormDialogState extends State<_NetworkFormDialog> {
     if (widget.red != null) {
       _nombreCtrl.text = widget.red!.nombre;
       _segmentoCtrl.text = widget.red!.segmento;
-      _vlanCtrl.text = widget.red!.vlan;
       _selectedEstado = widget.red!.estado;
     }
   }
@@ -412,7 +398,6 @@ class _NetworkFormDialogState extends State<_NetworkFormDialog> {
   void dispose() {
     _nombreCtrl.dispose();
     _segmentoCtrl.dispose();
-    _vlanCtrl.dispose();
     super.dispose();
   }
 
@@ -424,7 +409,6 @@ class _NetworkFormDialogState extends State<_NetworkFormDialog> {
     final data = {
       'nombre': _nombreCtrl.text.trim(),
       'segmento': _segmentoCtrl.text.trim(),
-      'vlan': _vlanCtrl.text.trim(),
       'estado': _selectedEstado,
     };
 
@@ -435,7 +419,15 @@ class _NetworkFormDialogState extends State<_NetworkFormDialog> {
         await SupabaseService().updateRed(widget.red!.id, data);
       }
       widget.onSaved();
-      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Red guardada correctamente en Supabase'),
+            backgroundColor: AppColors.statusActive,
+          ),
+        );
+        Navigator.pop(context);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -471,6 +463,7 @@ class _NetworkFormDialogState extends State<_NetworkFormDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // 1. NOMBRE DE LA RED
               TextFormField(
                 controller: _nombreCtrl,
                 decoration: const InputDecoration(
@@ -481,25 +474,39 @@ class _NetworkFormDialogState extends State<_NetworkFormDialog> {
               ),
               const SizedBox(height: 12),
 
+              // 2. SEGMENTACIÓN CON VALIDACIÓN DE MÁSCARA / PREFIJO CIDR
               TextFormField(
                 controller: _segmentoCtrl,
                 decoration: const InputDecoration(
                   labelText: 'Segmento CIDR (Ej. 192.168.1.0/24)',
                   prefixIcon: Icon(Icons.alt_route_rounded, color: AppColors.primary),
                 ),
-                validator: (val) => val == null || val.trim().isEmpty ? 'Ingrese el segmento CIDR' : null,
+                validator: (val) {
+                  if (val == null || val.trim().isEmpty) {
+                    return 'Ingrese el segmento CIDR';
+                  }
+
+                  final txt = val.trim();
+
+                  if (!txt.contains('/')) {
+                    return 'Debe incluir la máscara o prefijo CIDR (ej. /24)';
+                  }
+
+                  // Validación de formato IPv4 CIDR (Ej: 192.168.1.0/24)
+                  final cidrRegex = RegExp(
+                    r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(3[0-2]|[0-2]?[0-9])$',
+                  );
+
+                  if (!cidrRegex.hasMatch(txt)) {
+                    return 'Formato CIDR inválido (ej. 192.168.1.0/24)';
+                  }
+
+                  return null;
+                },
               ),
               const SizedBox(height: 12),
 
-              TextFormField(
-                controller: _vlanCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'VLAN ID (Ej. 10)',
-                  prefixIcon: Icon(Icons.numbers, color: AppColors.primary),
-                ),
-              ),
-              const SizedBox(height: 12),
-
+              // 3. ESTADO (ACTIVO / INACTIVO)
               DropdownButtonFormField<String>(
                 isExpanded: true,
                 value: _selectedEstado,

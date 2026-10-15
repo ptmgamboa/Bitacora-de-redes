@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/app_colors.dart';
 import 'dashboard_view.dart';
 import 'networks_view.dart';
 import 'devices_view.dart';
@@ -33,8 +34,6 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryPurple = Color(0xFF673AB7);
-
     final List<Widget> widgetOptions = <Widget>[
       DashboardView(
         onNavigateTab: (index) => _onItemTapped(index),
@@ -56,7 +55,7 @@ class _HomeViewState extends State<HomeView> {
             fontSize: 20,
           ),
         ),
-        backgroundColor: primaryPurple,
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 1,
       ),
@@ -66,9 +65,9 @@ class _HomeViewState extends State<HomeView> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: primaryPurple,
-        unselectedItemColor: Colors.grey[600],
+        backgroundColor: AppColors.surface,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textSecondary,
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         elevation: 8,

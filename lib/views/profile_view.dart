@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/app_colors.dart';
 import '../services/supabase_service.dart';
 import 'login_view.dart';
 import 'security_view.dart';
@@ -18,11 +20,11 @@ class ProfileView extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
+              backgroundColor: AppColors.statusCritical,
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(ctx, true),
@@ -46,102 +48,139 @@ class ProfileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userEmail = Supabase.instance.client.auth.currentUser?.email ?? 'admin@bitacora.com';
+    final userName = userEmail.split('@').first;
+
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          const CircleAvatar(
-            radius: 40,
-            backgroundColor: Color(0xFF673AB7),
-            child: Icon(Icons.person, size: 50, color: Colors.white),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Administrador de Red',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const Text(
-            'admin@bitacora.com',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
+          // BANNER DEL USUARIO
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.primaryDark, AppColors.primary],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.25),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 38,
+                  backgroundColor: Colors.white.withOpacity(0.2),
+                  child: const Icon(Icons.person, size: 46, color: Colors.white),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Administrador: $userName',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  userEmail,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 20),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.shield, color: Color(0xFF673AB7)),
-              title: const Text('Seguridad & Credenciales'),
-              subtitle: const Text('Conectado a Supabase Auth'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SecurityView()),
-                );
-              },
-            ),
+
+          // OPCIONES DE CONFIGURACIÓN
+          _buildOptionCard(
+            context,
+            icon: Icons.shield_outlined,
+            title: 'Seguridad & Credenciales',
+            subtitle: 'Conectado a Supabase Auth',
+            targetPage: const SecurityView(),
           ),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.dns, color: Color(0xFF673AB7)),
-              title: const Text('Servidor Supabase'),
-              subtitle: const Text('Estado: En Línea (Sincronizado)'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ServerView()),
-                );
-              },
-            ),
+          _buildOptionCard(
+            context,
+            icon: Icons.dns_outlined,
+            title: 'Servidor Supabase',
+            subtitle: 'Estado: En Línea (Sincronizado)',
+            targetPage: const ServerView(),
           ),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.notifications, color: Color(0xFF673AB7)),
-              title: const Text('Notificaciones de Alertas'),
-              subtitle: const Text('Activadas'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const NotificationsView()),
-                );
-              },
-            ),
+          _buildOptionCard(
+            context,
+            icon: Icons.notifications_none_rounded,
+            title: 'Notificaciones de Alertas',
+            subtitle: 'Sistema activo',
+            targetPage: const NotificationsView(),
           ),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.help_outline, color: Color(0xFF673AB7)),
-              title: const Text('Soporte Técnico'),
-              subtitle: const Text('Manual de la Bitácora'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SupportView()),
-                );
-              },
-            ),
+          _buildOptionCard(
+            context,
+            icon: Icons.help_outline_rounded,
+            title: 'Soporte Técnico',
+            subtitle: 'Manual de la Bitácora',
+            targetPage: const SupportView(),
           ),
+
           const SizedBox(height: 12),
-          Card(
-            color: Colors.red.shade50,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Colors.red.shade200),
+
+          // BOTÓN CERRAR SESIÓN
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.statusCriticalBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.statusCritical.withOpacity(0.3)),
             ),
             child: ListTile(
-              leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+              leading: const Icon(Icons.logout_rounded, color: AppColors.statusCritical),
               title: const Text(
                 'Cerrar Sesión',
-                style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                style: TextStyle(color: AppColors.statusCritical, fontWeight: FontWeight.bold),
               ),
-              subtitle: const Text('Salir de la cuenta actual'),
+              subtitle: const Text('Salir de la cuenta actual', style: TextStyle(fontSize: 12)),
               onTap: () => _cerrarSesion(context),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildOptionCard(
+      BuildContext context, {
+        required IconData icon,
+        required String title,
+        required String subtitle,
+        required Widget targetPage,
+      }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: AppColors.primary, size: 22),
+        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        subtitle: Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+        trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+        onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => targetPage));
+        },
       ),
     );
   }

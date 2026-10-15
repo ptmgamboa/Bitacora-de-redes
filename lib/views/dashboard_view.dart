@@ -19,7 +19,7 @@ class _DashboardViewState extends State<DashboardView> {
   int _cambiosHoy = 0;
   bool _isLoading = true;
   List<Map<String, String>> _notificaciones = [];
-  List<Map<String, dynamic>> _detallesCambiosHoy = [];
+  List<Map<String, dynamic>> _detallesCambios = [];
 
   @override
   void initState() {
@@ -35,7 +35,6 @@ class _DashboardViewState extends State<DashboardView> {
 
       List<Map<String, dynamic>> cambiosFormateados = [];
       for (var h in historial) {
-        final dt = DateTime.tryParse(h['created_at']?.toString() ?? '');
         final tipoStr = h['tipo']?.toString() ?? '';
 
         IconData icono = Icons.history_rounded;
@@ -53,12 +52,12 @@ class _DashboardViewState extends State<DashboardView> {
         }
 
         cambiosFormateados.add({
-          'tipo': h['titulo'] ?? 'Cambio Registrado',
-          'nombre': h['usuario'] ?? 'Administrador',
+          'id': h['id']?.toString() ?? '',
+          'titulo': h['titulo'] ?? 'Cambio Registrado',
+          'usuario': h['usuario'] ?? 'Administrador',
           'detalle': h['detalle'] ?? '',
-          'hora': dt != null
-              ? '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}'
-              : '--:--',
+          'hora': h['hora'] ?? '--:--',
+          'grupo': h['grupo'] ?? 'Anteriores',
           'icono': icono,
           'color': color,
         });
@@ -68,8 +67,8 @@ class _DashboardViewState extends State<DashboardView> {
         _totalRedes = data['totalRedes'] ?? 0;
         _totalDispositivos = data['totalDispositivos'] ?? 0;
         _notificaciones = List<Map<String, String>>.from(data['notificaciones'] ?? []);
-        _detallesCambiosHoy = cambiosFormateados;
-        _cambiosHoy = cambiosFormateados.length;
+        _detallesCambios = cambiosFormateados;
+        _cambiosHoy = data['cambiosHoy'] ?? 0;
       });
     } catch (e) {
       debugPrint('Error al cargar datos del dashboard: $e');
@@ -78,117 +77,236 @@ class _DashboardViewState extends State<DashboardView> {
     }
   }
 
+  Future<void> _eliminarRegistro(String id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Borrar registro'),
+        content: const Text('¿Deseas eliminar este evento del historial?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFD32F2F),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Borrar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await _service.deleteHistorialCambio(id);
+        await _fetchRealData();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registro eliminado del historial'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al eliminar registro: $e'),
+              backgroundColor: const Color(0xFFD32F2F),
+            ),
+          );
+        }
+      }
+    }
+  }
+
   void _mostrarModalCambiosHoy() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.history_rounded, color: Colors.indigo, size: 24),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Detalle de Cambios de Hoy',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            final grupos = _detallesCambios.map((e) => e['grupo']?.toString() ?? 'Anteriores').toSet().toList();
+
+            return DraggableScrollableSheet(
+              initialChildSize: 0.65,
+              minChildSize: 0.4,
+              maxChildSize: 0.88,
+              builder: (context, scrollController) {
+                return Container(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                   ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(ctx),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (_detallesCambiosHoy.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24.0),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        Icon(Icons.check_circle_outline, size: 48, color: Colors.grey.shade400),
-                        const SizedBox(height: 8),
-                        Text(
-                          'No hay registros o cambios realizados hoy.',
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
-                      ],
-                    ),
-                  ),
-                )
-              else
-                Container(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height * 0.4,
-                  ),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: _detallesCambiosHoy.length,
-                    itemBuilder: (context, index) {
-                      final item = _detallesCambiosHoy[index];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: (item['color'] as Color).withOpacity(0.1),
-                                shape: BoxShape.circle,
+                      ),
+                      Row(
+                        children: [
+                          const Icon(Icons.history_rounded, color: Colors.indigo, size: 24),
+                          const SizedBox(width: 10),
+                          const Text(
+                            'Detalle de Cambios',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: _detallesCambios.isEmpty
+                            ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.check_circle_outline, size: 48, color: Colors.grey.shade400),
+                              const SizedBox(height: 8),
+                              Text(
+                                'No hay registros o cambios en la bitácora.',
+                                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                               ),
-                              child: Icon(item['icono'] as IconData, color: item['color'] as Color, size: 20),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            ],
+                          ),
+                        )
+                            : ListView.builder(
+                          controller: scrollController,
+                          itemCount: grupos.length,
+                          itemBuilder: (context, gIndex) {
+                            final grupoNombre = grupos[gIndex];
+                            final itemsDelGrupo = _detallesCambios.where((e) => e['grupo'] == grupoNombre).toList();
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // ENCABEZADO DE GRUPO (HOY, AYER, FECHA)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 2.0),
+                                  child: Row(
                                     children: [
-                                      Expanded(
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: grupoNombre == 'Hoy'
+                                              ? const Color(0xFF673AB7).withOpacity(0.12)
+                                              : Colors.grey.shade200,
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
                                         child: Text(
-                                          item['tipo'] as String,
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                                          overflow: TextOverflow.ellipsis,
+                                          grupoNombre.toUpperCase(),
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: grupoNombre == 'Hoy' ? const Color(0xFF673AB7) : Colors.grey.shade700,
+                                          ),
                                         ),
                                       ),
-                                      Text(
-                                        item['hora'] as String,
-                                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(child: Divider(color: Colors.grey.shade300, height: 1)),
                                     ],
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    item['detalle'] as String,
-                                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                                ),
+
+                                // ELEMENTOS DEL GRUPO
+                                ...itemsDelGrupo.map((item) {
+                                  final id = item['id']?.toString() ?? '';
+
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 8),
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade50,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: Colors.grey.shade200),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: (item['color'] as Color).withOpacity(0.1),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(item['icono'] as IconData, color: item['color'] as Color, size: 20),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      item['titulo'] as String,
+                                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    item['hora'] as String,
+                                                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                item['detalle'] as String,
+                                                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+
+                                        // BOTÓN BORRAR EVENTO INDIVIDUAL
+                                        if (id.isNotEmpty)
+                                          IconButton(
+                                            constraints: const BoxConstraints(),
+                                            padding: const EdgeInsets.only(left: 8),
+                                            icon: const Icon(Icons.delete_outline, color: Color(0xFFD32F2F), size: 20),
+                                            onPressed: () async {
+                                              await _eliminarRegistro(id);
+                                              setModalState(() {});
+                                            },
+                                          ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                              ],
+                            );
+                          },
                         ),
-                      );
-                    },
+                      ),
+                    ],
                   ),
-                ),
-            ],
-          ),
+                );
+              },
+            );
+          },
         );
       },
     );
