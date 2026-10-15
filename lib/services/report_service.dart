@@ -9,10 +9,10 @@ import '../services/supabase_service.dart';
 class ReportService {
   final SupabaseService _service = SupabaseService();
 
-  static const PdfColor primaryColor = PdfColor.fromInt(0xFF673AB7);
-  static const PdfColor activeGreen = PdfColor.fromInt(0xFF2E7D32);
-  static const PdfColor inactiveOrange = PdfColor.fromInt(0xFFE65100);
-  static const PdfColor lightBg = PdfColor.fromInt(0xFFF5F5FA);
+  static const PdfColor primaryColor = PdfColor.fromInt(0xFF3730A3);
+  static const PdfColor activeGreen = PdfColor.fromInt(0xFF059669);
+  static const PdfColor inactiveOrange = PdfColor.fromInt(0xFFDC2626);
+  static const PdfColor lightBg = PdfColor.fromInt(0xFFF4F6FB);
 
   Future<Uint8List> generarReportePdfCompleto() async {
     final pdf = pw.Document();
@@ -272,21 +272,23 @@ class ReportService {
     );
   }
 
-  // --- TABLA HISTORIAL AUDITORÍA ---
+  // --- TABLA HISTORIAL AUDITORÍA CON FECHA Y HORA COMPLETA ---
   pw.Widget _buildHistorialTable(List<Map<String, dynamic>> historial) {
     if (historial.isEmpty) {
-      return pw.Text('No se registraron cambios el día de hoy.', style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600));
+      return pw.Text('No se registraron cambios en la bitácora.', style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600));
     }
 
-    final headers = ['Hora', 'Evento / Título', 'Usuario', 'Detalles'];
+    final headers = ['Fecha y Hora', 'Evento / Título', 'Usuario', 'Detalles'];
     final data = historial.map((h) {
-      final dt = DateTime.tryParse(h['created_at']?.toString() ?? '');
-      final horaStr = dt != null
-          ? '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}'
-          : '--:--';
+      final fechaHoraStr = h['fecha_formateada']?.toString() ?? (() {
+        final dt = DateTime.tryParse(h['created_at']?.toString() ?? '')?.toLocal();
+        return dt != null
+            ? '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}'
+            : '--/--/---- --:--';
+      })();
 
       return [
-        horaStr,
+        fechaHoraStr,
         h['titulo'] ?? 'Cambio',
         h['usuario'] ?? 'Admin',
         h['detalle'] ?? '',

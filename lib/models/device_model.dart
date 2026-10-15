@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/app_colors.dart';
 
 class DeviceModel {
   final String id;
@@ -94,25 +95,25 @@ class DeviceModel {
   }
 
   Color get colorTipo {
-    if (!esActivo) return Colors.grey;
+    if (!esActivo) return AppColors.textSecondary;
     switch (tipo) {
       case 'router':
-        return Colors.deepOrange;
+        return AppColors.router;
       case 'switch':
-        return Colors.indigo;
+        return AppColors.switchNet;
       case 'server':
-        return Colors.purple;
+        return AppColors.server;
       case 'ap':
-        return Colors.teal;
+        return AppColors.accessPoint;
       case 'printer':
-        return Colors.brown;
+        return AppColors.printer;
       case 'laptop':
-        return Colors.blue;
+        return AppColors.laptop;
       case 'phone':
-        return Colors.pink;
+        return AppColors.phone;
       case 'pc':
       default:
-        return const Color(0xFF673AB7);
+        return AppColors.pc;
     }
   }
 

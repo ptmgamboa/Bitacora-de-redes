@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/app_colors.dart';
 import '../models/device_model.dart';
-import '../services/supabase_service.dart';
 import '../models/network_model.dart';
+import '../services/supabase_service.dart';
 import '../core/validators.dart';
 
 class DevicesView extends StatefulWidget {
@@ -54,7 +55,7 @@ class _DevicesViewState extends State<DevicesView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Dispositivo marcado como $nuevoEstado'),
-            backgroundColor: nuevoEstado == 'Activo' ? Colors.green : Colors.orange,
+            backgroundColor: nuevoEstado == 'Activo' ? AppColors.statusActive : AppColors.statusWarning,
           ),
         );
         setState(() {});
@@ -62,7 +63,7 @@ class _DevicesViewState extends State<DevicesView> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cambiar estado: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error al cambiar estado: $e'), backgroundColor: AppColors.statusCritical),
         );
       }
     }
@@ -81,7 +82,7 @@ class _DevicesViewState extends State<DevicesView> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
+              backgroundColor: AppColors.statusCritical,
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(ctx, true),
@@ -98,7 +99,7 @@ class _DevicesViewState extends State<DevicesView> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Dispositivo eliminado correctamente'),
-              backgroundColor: Colors.green,
+              backgroundColor: AppColors.statusActive,
             ),
           );
           setState(() {});
@@ -108,7 +109,7 @@ class _DevicesViewState extends State<DevicesView> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error al eliminar dispositivo: $e'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.statusCritical,
             ),
           );
         }
@@ -137,10 +138,8 @@ class _DevicesViewState extends State<DevicesView> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF673AB7);
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5FA),
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           Padding(
@@ -149,19 +148,23 @@ class _DevicesViewState extends State<DevicesView> {
               controller: _searchCtrl,
               decoration: InputDecoration(
                 hintText: 'Buscar por IP, MAC, Nombre, Fabricante o Tipo...',
-                prefixIcon: const Icon(Icons.search, color: primaryColor),
+                prefixIcon: const Icon(Icons.search, color: AppColors.primary),
                 suffixIcon: _searchCtrl.text.isNotEmpty
                     ? IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.grey),
+                  icon: const Icon(Icons.clear, color: AppColors.textSecondary),
                   onPressed: () => _searchCtrl.clear(),
                 )
                     : null,
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppColors.surface,
                 contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14.0),
-                  borderSide: BorderSide.none,
+                  borderSide: const BorderSide(color: AppColors.border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14.0),
+                  borderSide: const BorderSide(color: AppColors.border),
                 ),
               ),
             ),
@@ -173,7 +176,7 @@ class _DevicesViewState extends State<DevicesView> {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
-                    child: CircularProgressIndicator(color: primaryColor),
+                    child: CircularProgressIndicator(color: AppColors.primary),
                   );
                 }
 
@@ -183,7 +186,7 @@ class _DevicesViewState extends State<DevicesView> {
                       padding: const EdgeInsets.all(16.0),
                       child: Text(
                         'Error al cargar dispositivos: ${snapshot.error}',
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(color: AppColors.statusCritical),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -195,13 +198,13 @@ class _DevicesViewState extends State<DevicesView> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.devices_other, size: 70, color: Colors.grey.shade400),
+                        Icon(Icons.devices_other, size: 70, color: AppColors.textSecondary.withOpacity(0.5)),
                         const SizedBox(height: 12),
                         Text(
                           _searchQuery.isEmpty
                               ? 'No hay dispositivos registrados.'
                               : 'No se encontraron coincidencias.',
-                          style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                          style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
                         ),
                       ],
                     ),
@@ -223,11 +226,12 @@ class _DevicesViewState extends State<DevicesView> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12.0),
                       decoration: BoxDecoration(
-                        color: d.esActivo ? Colors.white : Colors.grey.shade100,
+                        color: d.esActivo ? AppColors.surface : AppColors.background,
                         borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
+                            color: Colors.black.withOpacity(0.03),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),
@@ -241,7 +245,7 @@ class _DevicesViewState extends State<DevicesView> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: d.colorTipo.withOpacity(0.1),
+                                color: d.colorTipo.withOpacity(0.12),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -264,7 +268,7 @@ class _DevicesViewState extends State<DevicesView> {
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 16,
-                                            color: d.esActivo ? Colors.black87 : Colors.grey.shade600,
+                                            color: d.esActivo ? AppColors.textPrimary : AppColors.textSecondary,
                                             decoration: d.esActivo ? null : TextDecoration.lineThrough,
                                           ),
                                         ),
@@ -273,10 +277,10 @@ class _DevicesViewState extends State<DevicesView> {
                                         onTap: () => _toggleEstadoDispositivo(d),
                                         borderRadius: BorderRadius.circular(8),
                                         child: _buildBadge(
-                                          icon: d.esActivo ? Icons.check_circle : Icons.pause_circle_filled,
-                                          text: d.estado,
-                                          bgColor: d.esActivo ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.15),
-                                          textColor: d.esActivo ? Colors.green.shade800 : Colors.orange.shade900,
+                                          icon: d.esActivo ? Icons.check_circle_rounded : Icons.pause_circle_filled_rounded,
+                                          text: d.esActivo ? 'ACTIVE' : 'CRITICAL',
+                                          bgColor: d.esActivo ? AppColors.statusActiveBg : AppColors.statusCriticalBg,
+                                          textColor: d.esActivo ? AppColors.statusActive : AppColors.statusCritical,
                                         ),
                                       ),
                                     ],
@@ -290,20 +294,20 @@ class _DevicesViewState extends State<DevicesView> {
                                       _buildBadge(
                                         icon: d.icono,
                                         text: d.tipoTexto,
-                                        bgColor: d.colorTipo.withOpacity(0.1),
+                                        bgColor: d.colorTipo.withOpacity(0.12),
                                         textColor: d.colorTipo,
                                       ),
                                       _buildBadge(
                                         icon: Icons.wifi,
                                         text: d.ip,
-                                        bgColor: primaryColor.withOpacity(0.08),
-                                        textColor: primaryColor,
+                                        bgColor: AppColors.primary.withOpacity(0.08),
+                                        textColor: AppColors.primary,
                                       ),
                                       _buildBadge(
                                         icon: Icons.alt_route,
                                         text: redNombre,
-                                        bgColor: Colors.blue.withOpacity(0.1),
-                                        textColor: Colors.blue.shade800,
+                                        bgColor: AppColors.secondary.withOpacity(0.12),
+                                        textColor: AppColors.secondary,
                                       ),
                                     ],
                                   ),
@@ -311,9 +315,9 @@ class _DevicesViewState extends State<DevicesView> {
 
                                   Text(
                                     'MAC: ${d.mac}',
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 12,
-                                      color: Colors.grey.shade700,
+                                      color: AppColors.textSecondary,
                                       fontFamily: 'monospace',
                                     ),
                                   ),
@@ -322,9 +326,9 @@ class _DevicesViewState extends State<DevicesView> {
                                       padding: const EdgeInsets.only(top: 4.0),
                                       child: Text(
                                         '${d.fabricante}${d.fabricante.isNotEmpty && d.ubicacion.isNotEmpty ? ' • ' : ''}${d.ubicacion}',
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontSize: 12,
-                                          color: Colors.grey.shade600,
+                                          color: AppColors.textSecondary,
                                         ),
                                       ),
                                     ),
@@ -333,10 +337,10 @@ class _DevicesViewState extends State<DevicesView> {
                                       padding: const EdgeInsets.only(top: 4.0),
                                       child: Text(
                                         resumen,
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
-                                          color: Colors.indigo.shade700,
+                                          color: AppColors.primary,
                                         ),
                                       ),
                                     ),
@@ -351,7 +355,7 @@ class _DevicesViewState extends State<DevicesView> {
                                   padding: const EdgeInsets.all(6),
                                   icon: Icon(
                                     Icons.settings_ethernet_rounded,
-                                    color: d.esSwitch ? Colors.indigo : Colors.grey.shade600,
+                                    color: d.esSwitch ? AppColors.primary : AppColors.textSecondary,
                                     size: 22,
                                   ),
                                   tooltip: 'Configuración de Puertos / VLANs',
@@ -362,7 +366,7 @@ class _DevicesViewState extends State<DevicesView> {
                                   constraints: const BoxConstraints(),
                                   padding: const EdgeInsets.all(6),
                                   icon: const Icon(Icons.edit_outlined,
-                                      color: Colors.blueAccent, size: 22),
+                                      color: AppColors.secondary, size: 22),
                                   onPressed: () => _abrirFormulario(d),
                                 ),
                                 const SizedBox(height: 4),
@@ -370,7 +374,7 @@ class _DevicesViewState extends State<DevicesView> {
                                   constraints: const BoxConstraints(),
                                   padding: const EdgeInsets.all(6),
                                   icon: const Icon(Icons.delete_outline,
-                                      color: Colors.redAccent, size: 22),
+                                      color: AppColors.statusCritical, size: 22),
                                   onPressed: () => _eliminarDispositivo(d.id, d.nombre),
                                 ),
                               ],
@@ -389,7 +393,7 @@ class _DevicesViewState extends State<DevicesView> {
 
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'btn_devices_view_fab',
-        backgroundColor: primaryColor,
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         onPressed: () => _abrirFormulario(),
         icon: const Icon(Icons.add),
@@ -418,9 +422,10 @@ class _DevicesViewState extends State<DevicesView> {
           Text(
             text,
             style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
               color: textColor,
+              letterSpacing: 0.3,
             ),
           ),
         ],
@@ -515,19 +520,18 @@ class _PortConfigModalState extends State<_PortConfigModal> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryPurple = Color(0xFF673AB7);
     final cfgActual = _configPuertos[_puertoSeleccionado] ?? {'vlan': 10, 'modo': 'Acceso'};
     final isTrunkActual = cfgActual['modo'] == 'Trunk';
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.88,
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.all(20.0),
       child: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: primaryPurple))
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -537,14 +541,14 @@ class _PortConfigModalState extends State<_PortConfigModal> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: AppColors.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
           Row(
             children: [
-              const Icon(Icons.settings_ethernet, color: primaryPurple, size: 26),
+              const Icon(Icons.settings_ethernet, color: AppColors.primary, size: 26),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -552,12 +556,12 @@ class _PortConfigModalState extends State<_PortConfigModal> {
                   children: [
                     Text(
                       'Puertos & VLANs - ${widget.dispositivo.nombre}',
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                       overflow: TextOverflow.ellipsis,
                     ),
-                    Text(
+                    const Text(
                       'Gestión de puertos física y asignación VLAN',
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -569,20 +573,20 @@ class _PortConfigModalState extends State<_PortConfigModal> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Capacidad del Switch:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const Text('Capacidad del Switch:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: AppColors.background,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: DropdownButton<int>(
                   value: _totalPuertos,
                   underline: const SizedBox(),
                   isDense: true,
                   items: const [8, 16, 24, 48].map((n) {
-                    return DropdownMenuItem(value: n, child: Text('$n Puertos', style: const TextStyle(fontSize: 13)));
+                    return DropdownMenuItem(value: n, child: Text('$n Puertos', style: const TextStyle(fontSize: 13, color: AppColors.textPrimary)));
                   }).toList(),
                   onChanged: (val) {
                     if (val != null) {
@@ -621,13 +625,13 @@ class _PortConfigModalState extends State<_PortConfigModal> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? primaryPurple.withOpacity(0.15)
-                          : (isTrunk ? Colors.amber.shade50 : Colors.grey.shade100),
+                          ? AppColors.primary.withOpacity(0.12)
+                          : (isTrunk ? AppColors.statusWarningBg : AppColors.background),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isSelected
-                            ? primaryPurple
-                            : (isTrunk ? Colors.amber.shade700 : Colors.grey.shade300),
+                            ? AppColors.primary
+                            : (isTrunk ? AppColors.statusWarning : AppColors.border),
                         width: isSelected ? 2.5 : 1,
                       ),
                     ),
@@ -638,8 +642,8 @@ class _PortConfigModalState extends State<_PortConfigModal> {
                           Icons.settings_input_component_rounded,
                           size: 16,
                           color: isSelected
-                              ? primaryPurple
-                              : (isTrunk ? Colors.amber.shade900 : Colors.black87),
+                              ? AppColors.primary
+                              : (isTrunk ? AppColors.statusWarning : AppColors.textPrimary),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -647,7 +651,7 @@ class _PortConfigModalState extends State<_PortConfigModal> {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 11,
-                            color: isSelected ? primaryPurple : Colors.black87,
+                            color: isSelected ? AppColors.primary : AppColors.textPrimary,
                           ),
                         ),
                         Text(
@@ -655,7 +659,7 @@ class _PortConfigModalState extends State<_PortConfigModal> {
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
-                            color: isTrunk ? Colors.amber.shade900 : Colors.teal.shade700,
+                            color: isTrunk ? AppColors.statusWarning : AppColors.secondary,
                           ),
                         ),
                       ],
@@ -670,9 +674,9 @@ class _PortConfigModalState extends State<_PortConfigModal> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              color: AppColors.background,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: AppColors.border),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -682,12 +686,12 @@ class _PortConfigModalState extends State<_PortConfigModal> {
                   children: [
                     Text(
                       'Configuración del Puerto P$_puertoSeleccionado',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: primaryPurple),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: isTrunkActual ? Colors.amber.shade100 : Colors.teal.shade100,
+                        color: isTrunkActual ? AppColors.statusWarningBg : AppColors.statusActiveBg,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -695,7 +699,7 @@ class _PortConfigModalState extends State<_PortConfigModal> {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: isTrunkActual ? Colors.amber.shade900 : Colors.teal.shade900,
+                          color: isTrunkActual ? AppColors.statusWarning : AppColors.statusActive,
                         ),
                       ),
                     ),
@@ -708,16 +712,16 @@ class _PortConfigModalState extends State<_PortConfigModal> {
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 8),
-                          side: BorderSide(color: isTrunkActual ? primaryPurple : Colors.grey.shade400),
+                          side: BorderSide(color: isTrunkActual ? AppColors.primary : AppColors.border),
                         ),
                         icon: Icon(
                           isTrunkActual ? Icons.check_circle : Icons.swap_horiz,
                           size: 16,
-                          color: isTrunkActual ? primaryPurple : Colors.grey.shade700,
+                          color: isTrunkActual ? AppColors.primary : AppColors.textSecondary,
                         ),
                         label: Text(
                           isTrunkActual ? 'Cambiar a Acceso' : 'Cambiar a Trunk',
-                          style: const TextStyle(fontSize: 11),
+                          style: const TextStyle(fontSize: 11, color: AppColors.textPrimary),
                         ),
                         onPressed: () {
                           setState(() {
@@ -730,15 +734,15 @@ class _PortConfigModalState extends State<_PortConfigModal> {
                     Expanded(
                       child: Row(
                         children: [
-                          const Text('VLAN ID:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          const Text('VLAN ID:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: AppColors.surface,
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.grey.shade300),
+                                border: Border.all(color: AppColors.border),
                               ),
                               child: DropdownButton<int>(
                                 value: cfgActual['vlan'] as int,
@@ -748,7 +752,7 @@ class _PortConfigModalState extends State<_PortConfigModal> {
                                 items: [10, 20, 30, 40, 50, 100].map((vlanId) {
                                   return DropdownMenuItem(
                                     value: vlanId,
-                                    child: Text('VLAN $vlanId', style: const TextStyle(fontSize: 11)),
+                                    child: Text('VLAN $vlanId', style: const TextStyle(fontSize: 11, color: AppColors.textPrimary)),
                                   );
                                 }).toList(),
                                 onChanged: isTrunkActual
@@ -777,10 +781,10 @@ class _PortConfigModalState extends State<_PortConfigModal> {
             width: double.infinity,
             height: 46,
             child: _isSaving
-                ? const Center(child: CircularProgressIndicator(color: primaryPurple))
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
                 : ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: primaryPurple,
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -812,8 +816,8 @@ class _PortConfigModalState extends State<_PortConfigModal> {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Configuración de $_totalPuertos puertos guardada en la nube'),
-                        backgroundColor: Colors.green,
+                        content: Text('Configuración de $_totalPuertos puertos guardada'),
+                        backgroundColor: AppColors.statusActive,
                       ),
                     );
                     Navigator.pop(context);
@@ -823,7 +827,7 @@ class _PortConfigModalState extends State<_PortConfigModal> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Error al guardar configuración: $e'),
-                        backgroundColor: Colors.red,
+                        backgroundColor: AppColors.statusCritical,
                       ),
                     );
                   }
@@ -840,7 +844,7 @@ class _PortConfigModalState extends State<_PortConfigModal> {
   }
 }
 
-// --- FORMULARIO EMERGENTE DINÁMICO CON ESTADO INICIAL ---
+// --- FORMULARIO EMERGENTE DINÁMICO ---
 class _DeviceFormDialog extends StatefulWidget {
   final DeviceModel? dispositivo;
   final VoidCallback onSaved;
@@ -948,7 +952,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Por favor, completa todos los campos requeridos'),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppColors.statusWarning,
         ),
       );
       return;
@@ -1007,7 +1011,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error al guardar: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.statusCritical,
           ),
         );
       }
@@ -1026,8 +1030,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
               controller: _gatewayCtrl,
               decoration: const InputDecoration(
                 labelText: 'IP Gateway por Defecto',
-                prefixIcon: Icon(Icons.alt_route),
-                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                prefixIcon: Icon(Icons.alt_route, color: AppColors.primary),
               ),
             ),
             const SizedBox(height: 12),
@@ -1035,8 +1038,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
               controller: _wanCtrl,
               decoration: const InputDecoration(
                 labelText: 'Interfaz WAN / ISP',
-                prefixIcon: Icon(Icons.public_rounded),
-                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                prefixIcon: Icon(Icons.public_rounded, color: AppColors.primary),
               ),
             ),
           ],
@@ -1050,8 +1052,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
               controller: _ssidCtrl,
               decoration: const InputDecoration(
                 labelText: 'Nombre de Red Wi-Fi (SSID)',
-                prefixIcon: Icon(Icons.wifi_lock_rounded),
-                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                prefixIcon: Icon(Icons.wifi_lock_rounded, color: AppColors.primary),
               ),
             ),
             const SizedBox(height: 12),
@@ -1060,8 +1061,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
               value: _frecuenciaVal,
               decoration: const InputDecoration(
                 labelText: 'Banda / Frecuencia Wi-Fi',
-                prefixIcon: Icon(Icons.cell_tower_rounded),
-                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                prefixIcon: Icon(Icons.cell_tower_rounded, color: AppColors.primary),
               ),
               items: const [
                 DropdownMenuItem(value: '2.4 GHz', child: Text('2.4 GHz')),
@@ -1085,8 +1085,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
               value: _rolServerVal,
               decoration: const InputDecoration(
                 labelText: 'Rol Principal del Servidor',
-                prefixIcon: Icon(Icons.dns_outlined),
-                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                prefixIcon: Icon(Icons.dns_outlined, color: AppColors.primary),
               ),
               items: const [
                 DropdownMenuItem(value: 'Active Directory / Dominios', child: Text('Active Directory / Dominios')),
@@ -1105,8 +1104,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
               controller: _soCtrl,
               decoration: const InputDecoration(
                 labelText: 'Sistema Operativo',
-                prefixIcon: Icon(Icons.computer_rounded),
-                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                prefixIcon: Icon(Icons.computer_rounded, color: AppColors.primary),
               ),
             ),
           ],
@@ -1120,8 +1118,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
               controller: _protocoloPrintCtrl,
               decoration: const InputDecoration(
                 labelText: 'Protocolo / Cola de Impresión',
-                prefixIcon: Icon(Icons.print_outlined),
-                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                prefixIcon: Icon(Icons.print_outlined, color: AppColors.primary),
               ),
             ),
           ],
@@ -1137,8 +1134,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
               controller: _usuarioCtrl,
               decoration: const InputDecoration(
                 labelText: 'Usuario / Departamento Asignado',
-                prefixIcon: Icon(Icons.person_outline_rounded),
-                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                prefixIcon: Icon(Icons.person_outline_rounded, color: AppColors.primary),
               ),
             ),
           ],
@@ -1152,26 +1148,29 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF673AB7);
-
     if (_isLoading) {
       return const AlertDialog(
+        backgroundColor: AppColors.surface,
         content: SizedBox(
           height: 120,
           child: Center(
-            child: CircularProgressIndicator(color: primaryColor),
+            child: CircularProgressIndicator(color: AppColors.primary),
           ),
         ),
       );
     }
 
     return AlertDialog(
+      backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
       title: Row(
         children: [
-          const Icon(Icons.devices, color: primaryColor),
+          const Icon(Icons.devices, color: AppColors.primary),
           const SizedBox(width: 8),
-          Text(widget.dispositivo == null ? 'Nuevo Dispositivo' : 'Editar Dispositivo'),
+          Text(
+            widget.dispositivo == null ? 'Nuevo Dispositivo' : 'Editar Dispositivo',
+            style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+          ),
         ],
       ),
       content: SizedBox(
@@ -1193,21 +1192,21 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
                     value: _selectedTipo,
                     decoration: const InputDecoration(
                       labelText: 'Tipo de Dispositivo',
-                      prefixIcon: Icon(Icons.category_outlined),
+                      prefixIcon: Icon(Icons.category_outlined, color: AppColors.primary),
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                     ),
                     items: _tiposOpciones.map((item) {
                       return DropdownMenuItem<String>(
                         value: item['value'] as String,
                         child: Row(
                           children: [
-                            Icon(item['icon'] as IconData, size: 20, color: primaryColor),
+                            Icon(item['icon'] as IconData, size: 20, color: AppColors.primary),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 item['label'] as String,
                                 overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: AppColors.textPrimary),
                               ),
                             ),
                           ],
@@ -1225,13 +1224,12 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
                     value: _selectedEstado,
                     decoration: const InputDecoration(
                       labelText: 'Estado Operativo',
-                      prefixIcon: Icon(Icons.toggle_on_outlined),
+                      prefixIcon: Icon(Icons.toggle_on_outlined, color: AppColors.primary),
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                     ),
                     items: const [
-                      DropdownMenuItem(value: 'Activo', child: Text('Activo (En Producción)')),
-                      DropdownMenuItem(value: 'Inactivo', child: Text('Inactivo / Mantenimiento')),
+                      DropdownMenuItem(value: 'Activo', child: Text('Activo (En Producción)', style: TextStyle(color: AppColors.textPrimary))),
+                      DropdownMenuItem(value: 'Inactivo', child: Text('Inactivo / Mantenimiento', style: TextStyle(color: AppColors.textPrimary))),
                     ],
                     onChanged: (val) {
                       if (val != null) setState(() => _selectedEstado = val);
@@ -1243,8 +1241,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
                     controller: _nombreCtrl,
                     decoration: const InputDecoration(
                       labelText: 'Nombre (Ej. Router-Borde, SW-Core, PC-Admin)',
-                      prefixIcon: Icon(Icons.badge_outlined),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                      prefixIcon: Icon(Icons.badge_outlined, color: AppColors.primary),
                     ),
                     validator: Validators.requerido,
                   ),
@@ -1254,8 +1251,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
                     controller: _ipCtrl,
                     decoration: const InputDecoration(
                       labelText: 'Dirección IPv4',
-                      prefixIcon: Icon(Icons.numbers),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                      prefixIcon: Icon(Icons.numbers, color: AppColors.primary),
                     ),
                     validator: Validators.validarIPv4,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -1266,8 +1262,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
                     controller: _macCtrl,
                     decoration: const InputDecoration(
                       labelText: 'Dirección MAC (XX:XX:XX:XX:XX:XX)',
-                      prefixIcon: Icon(Icons.lan_outlined),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                      prefixIcon: Icon(Icons.lan_outlined, color: AppColors.primary),
                     ),
                     validator: Validators.validarMAC,
                     inputFormatters: [
@@ -1281,8 +1276,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
                     controller: _fabCtrl,
                     decoration: const InputDecoration(
                       labelText: 'Fabricante (Ej. Cisco, Mikrotik, HP, Dell, TP-Link)',
-                      prefixIcon: Icon(Icons.precision_manufacturing_outlined),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                      prefixIcon: Icon(Icons.precision_manufacturing_outlined, color: AppColors.primary),
                     ),
                     validator: Validators.requerido,
                   ),
@@ -1292,8 +1286,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
                     controller: _ubicaCtrl,
                     decoration: const InputDecoration(
                       labelText: 'Ubicación / Rack / Oficina',
-                      prefixIcon: Icon(Icons.place_outlined),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                      prefixIcon: Icon(Icons.place_outlined, color: AppColors.primary),
                     ),
                     validator: Validators.requerido,
                   ),
@@ -1304,8 +1297,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
                     value: _selectedRedId,
                     decoration: const InputDecoration(
                       labelText: 'Red Asociada',
-                      prefixIcon: Icon(Icons.router_outlined),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                      prefixIcon: Icon(Icons.router_outlined, color: AppColors.primary),
                     ),
                     items: _redesDisponibles.map((red) {
                       return DropdownMenuItem(
@@ -1313,6 +1305,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
                         child: Text(
                           '${red.nombre} (${red.segmento})',
                           overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: AppColors.textPrimary),
                         ),
                       );
                     }).toList(),
@@ -1330,7 +1323,7 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
+          child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
         ),
         _isSaving
             ? const Padding(
@@ -1338,12 +1331,12 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
           child: SizedBox(
             width: 20,
             height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2, color: primaryColor),
+            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
           ),
         )
             : ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: primaryColor,
+            backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
           ),

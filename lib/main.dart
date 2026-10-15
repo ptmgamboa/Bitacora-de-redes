@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/constants.dart';
+import 'core/app_colors.dart';
 import 'views/login_view.dart';
 
 Future<void> main() async {
@@ -19,56 +20,54 @@ class BitacoraApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primaryBlue = Color(0xFF6A1B9A);
-    const backgroundColor = Color(0xFFF8F9FA);
-
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Bitacora.Net', // Nombre actualizado
+      title: 'Bitacora.Net',
       theme: ThemeData(
         useMaterial3: true,
+        scaffoldBackgroundColor: AppColors.background,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: primaryBlue,
-          primary: primaryBlue,
-          surface: Colors.white,
+          seedColor: AppColors.primary,
+          primary: AppColors.primary,
+          secondary: AppColors.secondary,
+          surface: AppColors.surface,
         ),
-        scaffoldBackgroundColor: backgroundColor,
 
         // Estilo global para tarjetas
         cardTheme: CardThemeData(
-          color: Colors.white,
+          color: AppColors.surface,
           elevation: 0,
           margin: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Colors.grey.shade200, width: 1),
+            side: const BorderSide(color: AppColors.border, width: 1),
           ),
         ),
 
         // Campos de texto estilizados
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.white,
+          fillColor: AppColors.surface,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
+            borderSide: const BorderSide(color: AppColors.border),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
+            borderSide: const BorderSide(color: AppColors.border),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: primaryBlue, width: 2),
+            borderSide: const BorderSide(color: AppColors.primary, width: 2),
           ),
-          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+          hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
         ),
 
         // Botones primarios
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: primaryBlue,
+            backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
             minimumSize: const Size(double.infinity, 48),
             shape: RoundedRectangleBorder(
@@ -82,9 +81,9 @@ class BitacoraApp extends StatelessWidget {
         // Botones contorneados
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            foregroundColor: primaryBlue,
+            foregroundColor: AppColors.primary,
             minimumSize: const Size(double.infinity, 48),
-            side: const BorderSide(color: primaryBlue, width: 1.5),
+            side: const BorderSide(color: AppColors.primary, width: 1.5),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -94,18 +93,18 @@ class BitacoraApp extends StatelessWidget {
 
         // Barra de navegación inferior
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          backgroundColor: Colors.white,
-          selectedItemColor: primaryBlue,
-          unselectedItemColor: Color(0xFF757575),
+          backgroundColor: AppColors.surface,
+          selectedItemColor: AppColors.primary,
+          unselectedItemColor: AppColors.textSecondary,
           selectedLabelStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
           unselectedLabelStyle: TextStyle(fontSize: 10),
           type: BottomNavigationBarType.fixed,
           elevation: 8,
         ),
 
-        // AppBar
+        // AppBar principal
         appBarTheme: const AppBarTheme(
-          backgroundColor: primaryBlue,
+          backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: false,

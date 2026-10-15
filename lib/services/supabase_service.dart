@@ -40,16 +40,31 @@ class SupabaseService {
 
   Future<List<Map<String, dynamic>>> getHistorialCambiosHoy() async {
     try {
-      final now = DateTime.now();
-      final inicioHoy = DateTime(now.year, now.month, now.day);
-
       final res = await _supabase
           .from('historial_cambios')
           .select()
-          .gte('created_at', inicioHoy.toIso8601String())
           .order('created_at', ascending: false);
 
-      return List<Map<String, dynamic>>.from(res as List);
+      List<Map<String, dynamic>> lista = List<Map<String, dynamic>>.from(res as List);
+
+      for (var item in lista) {
+        final dt = DateTime.tryParse(item['created_at']?.toString() ?? '')?.toLocal();
+        if (dt != null) {
+          final dia = dt.day.toString().padLeft(2, '0');
+          final mes = dt.month.toString().padLeft(2, '0');
+          final anio = dt.year;
+          final hora = dt.hour.toString().padLeft(2, '0');
+          final min = dt.minute.toString().padLeft(2, '0');
+
+          item['fecha_formateada'] = '$dia/$mes/$anio $hora:$min';
+          item['fecha'] = '$dia/$mes/$anio';
+          item['hora'] = '$hora:$min';
+        } else {
+          item['fecha_formateada'] = '--/--/---- --:--';
+        }
+      }
+
+      return lista;
     } catch (e) {
       debugPrint('Error al consultar historial: $e');
       return [];
@@ -62,10 +77,17 @@ class SupabaseService {
   }
 
   Future<void> addRed(Map<String, dynamic> data) async {
-    await _supabase.from('redes').insert(data);
+    // Solamente enviamos columnas existentes en la tabla 'redes'
+    final payload = <String, dynamic>{
+      'nombre': data['nombre'],
+      'segmento': data['segmento'],
+      'estado': data['estado'] ?? 'Activa',
+    };
 
-    final nombre = data['nombre'] ?? 'Red';
-    final segmento = data['segmento'] ?? '';
+    await _supabase.from('redes').insert(payload);
+
+    final nombre = payload['nombre'] ?? 'Red';
+    final segmento = payload['segmento'] ?? '';
 
     await registrarCambio(
       tipo: 'red',
@@ -81,17 +103,25 @@ class SupabaseService {
       redAnterior = await _supabase.from('redes').select().eq('id', id).maybeSingle();
     } catch (_) {}
 
-    await _supabase.from('redes').update(data).eq('id', id);
+    final payload = <String, dynamic>{};
+    if (data.containsKey('nombre')) payload['nombre'] = data['nombre'];
+    if (data.containsKey('segmento')) payload['segmento'] = data['segmento'];
+    if (data.containsKey('estado')) payload['estado'] = data['estado'];
 
-    final nombreNuevo = data['nombre'] ?? redAnterior?['nombre'] ?? 'Red';
+    await _supabase.from('redes').update(payload).eq('id', id);
+
+    final nombreNuevo = payload['nombre'] ?? redAnterior?['nombre'] ?? 'Red';
     List<String> cambios = [];
 
     if (redAnterior != null) {
-      if (data.containsKey('segmento') && data['segmento'] != redAnterior['segmento']) {
-        cambios.add('Segmento: ${redAnterior['segmento']} ➔ ${data['segmento']}');
+      if (payload.containsKey('segmento') && payload['segmento'] != redAnterior['segmento']) {
+        cambios.add('Segmento: ${redAnterior['segmento']} ➔ ${payload['segmento']}');
       }
-      if (data.containsKey('nombre') && data['nombre'] != redAnterior['nombre']) {
-        cambios.add('Nombre: "${redAnterior['nombre']}" ➔ "${data['nombre']}"');
+      if (payload.containsKey('nombre') && payload['nombre'] != redAnterior['nombre']) {
+        cambios.add('Nombre: "${redAnterior['nombre']}" ➔ "${payload['nombre']}"');
+      }
+      if (payload.containsKey('estado') && payload['estado'] != redAnterior['estado']) {
+        cambios.add('Estado: ${redAnterior['estado']} ➔ ${payload['estado']}');
       }
     }
 
@@ -173,6 +203,9 @@ class SupabaseService {
       }
       if (data.containsKey('ip') && data['ip'] != dispAnterior['ip']) {
         cambios.add('IP cambiada: ${dispAnterior['ip']} ➔ ${data['ip']}');
+      }
+      if (data.containsKey('estado') && data['estado'] != dispAnterior['estado']) {
+        cambios.add('Estado: ${dispAnterior['estado']} ➔ ${data['estado']}');
       }
       if (data.containsKey('ubicacion') && data['ubicacion'] != dispAnterior['ubicacion']) {
         cambios.add('Ubicación: ${data['ubicacion']}');
@@ -256,6 +289,14 @@ class SupabaseService {
 
     final historialHoy = await getHistorialCambiosHoy();
 
+    final now = DateTime.now();
+    final hoyStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+    final cambiosHoyCount = historialHoy.where((h) {
+      final ca = h['created_at']?.toString() ?? '';
+      return ca.startsWith(hoyStr);
+    }).length;
+
     List<Map<String, String>> notificaciones = [];
 
     final redesSinEquipos = redes.where((r) {
@@ -287,7 +328,7 @@ class SupabaseService {
     return {
       'totalRedes': redes.length,
       'totalDispositivos': dispositivos.length,
-      'cambiosHoy': historialHoy.length,
+      'cambiosHoy': cambiosHoyCount > 0 ? cambiosHoyCount : historialHoy.length,
       'notificaciones': notificaciones,
       'ultimosCambios': historialHoy,
     };
