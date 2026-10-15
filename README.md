@@ -125,6 +125,6 @@ Gómez Marván Abraham Raul:
 
 Dentro de la práctica, integrar la bitácora de redes era una solución eficiente para poder segmentar bien las redes, el detalle fue optimizar esto mediante flutter puesto que debíamos tener un inventario estructurado en flutter y supabase, tuvimos que tener en cuenta toda la lista de cotejo aunque nos centramos mucho en detalles como la limitación de errores humanos en la captura de direcciones IP, MAC y subredes gracias a usar validaciones estrictas y relaciones de llaves foráneas, el enfoque cerrado que le dimos garantizó que sólo los usuarios autorizados podían gestionar la infraestructura de la red resguardando la información crítica del sistema.
 
-Ruiz Rincón José luis:
+Ruiz Rincón José luis: hola jeje prueba
 
 Trabajar en esta aplicación fue una gran oportunidad para conectar la teoría con una solución práctica y funcional. Nos enfocamos en que el sistema fuera intuitivo y confiable, asegurando que el registro de los equipos y la información de la red no presentaran fallas al momento de capturar los datos. Más allá del código, fue clave aprender a coordinarnos en equipo para integrar las ideas de todos y entregar un proyecto completo que cumpliera con lo solicitado. Al final, logramos una herramienta sólida que simplifica el control de la red y nos demuestra la capacidad que tenemos para resolver problemas reales mediante el desarrollo de software.
