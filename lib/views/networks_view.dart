@@ -3,6 +3,7 @@ import '../core/app_colors.dart';
 import '../models/network_model.dart';
 import '../models/device_model.dart';
 import '../services/supabase_service.dart';
+import '../widgets/responsive_body.dart';
 
 class NetworksView extends StatefulWidget {
   const NetworksView({super.key});
@@ -172,186 +173,189 @@ class _NetworksViewState extends State<NetworksView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchCtrl,
-              decoration: InputDecoration(
-                hintText: 'Buscar por Nombre o Segmento CIDR...',
-                prefixIcon: const Icon(Icons.search, color: AppColors.primary),
-                suffixIcon: _searchCtrl.text.isNotEmpty
-                    ? IconButton(
-                  icon: const Icon(Icons.clear, color: AppColors.textSecondary),
-                  onPressed: () => _searchCtrl.clear(),
-                )
-                    : null,
-                filled: true,
-                fillColor: AppColors.surface,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14.0),
-                  borderSide: const BorderSide(color: AppColors.border),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14.0),
-                  borderSide: const BorderSide(color: AppColors.border),
+      body: ResponsiveBody(
+        maxWidth: 900,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                controller: _searchCtrl,
+                decoration: InputDecoration(
+                  hintText: 'Buscar por Nombre o Segmento CIDR...',
+                  prefixIcon: const Icon(Icons.search, color: AppColors.primary),
+                  suffixIcon: _searchCtrl.text.isNotEmpty
+                      ? IconButton(
+                    icon: const Icon(Icons.clear, color: AppColors.textSecondary),
+                    onPressed: () => _searchCtrl.clear(),
+                  )
+                      : null,
+                  filled: true,
+                  fillColor: AppColors.surface,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14.0),
+                    borderSide: const BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14.0),
+                    borderSide: const BorderSide(color: AppColors.border),
+                  ),
                 ),
               ),
             ),
-          ),
 
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-                : _redesFiltradas.isEmpty
-                ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.hub_outlined, size: 70, color: AppColors.textSecondary.withOpacity(0.5)),
-                  const SizedBox(height: 12),
-                  Text(
-                    _searchQuery.isEmpty ? 'No hay redes registradas.' : 'No se encontraron coincidencias.',
-                    style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                  : _redesFiltradas.isEmpty
+                  ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.hub_outlined, size: 70, color: AppColors.textSecondary.withOpacity(0.5)),
+                    const SizedBox(height: 12),
+                    Text(
+                      _searchQuery.isEmpty ? 'No hay redes registradas.' : 'No se encontraron coincidencias.',
+                      style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
                     ),
-                    onPressed: () => _abrirFormulario(),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Agregar Primera Red'),
-                  ),
-                ],
-              ),
-            )
-                : RefreshIndicator(
-              onRefresh: _cargarDatos,
-              color: AppColors.primary,
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                itemCount: _redesFiltradas.length,
-                itemBuilder: (context, index) {
-                  final red = _redesFiltradas[index];
-                  final esActiva = red.estado == 'Activa';
-                  final equipos = _mapaDispositivos[red.id] ?? [];
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () => _abrirFormulario(),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Agregar Primera Red'),
+                    ),
+                  ],
+                ),
+              )
+                  : RefreshIndicator(
+                onRefresh: _cargarDatos,
+                color: AppColors.primary,
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                  itemCount: _redesFiltradas.length,
+                  itemBuilder: (context, index) {
+                    final red = _redesFiltradas[index];
+                    final esActiva = red.estado == 'Activa';
+                    final equipos = _mapaDispositivos[red.id] ?? [];
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12.0),
-                    decoration: BoxDecoration(
-                      color: esActiva ? AppColors.surface : AppColors.background,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.hub_rounded,
-                                color: esActiva ? AppColors.secondary : AppColors.textSecondary,
-                                size: 24,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  red.nombre,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                    color: esActiva ? AppColors.textPrimary : AppColors.textSecondary,
-                                    decoration: esActiva ? null : TextDecoration.lineThrough,
-                                  ),
-                                ),
-                              ),
-                              InkWell(
-                                onTap: () => _toggleEstadoRed(red),
-                                borderRadius: BorderRadius.circular(8),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: esActiva ? AppColors.statusActiveBg : AppColors.statusCriticalBg,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        esActiva ? Icons.check_circle : Icons.pause_circle_filled,
-                                        size: 13,
-                                        color: esActiva ? AppColors.statusActive : AppColors.statusCritical,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        red.estado,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: esActiva ? AppColors.statusActive : AppColors.statusCritical,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              IconButton(
-                                constraints: const BoxConstraints(),
-                                padding: const EdgeInsets.all(4),
-                                icon: const Icon(Icons.edit_outlined, color: AppColors.secondary, size: 20),
-                                onPressed: () => _abrirFormulario(red),
-                              ),
-                              IconButton(
-                                constraints: const BoxConstraints(),
-                                padding: const EdgeInsets.all(4),
-                                icon: const Icon(Icons.delete_outline, color: AppColors.statusCritical, size: 20),
-                                onPressed: () => _eliminarRed(red),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 6,
-                            children: [
-                              Chip(
-                                avatar: const Icon(Icons.numbers, size: 14, color: AppColors.primary),
-                                label: Text(red.segmento, style: const TextStyle(fontSize: 12, fontFamily: 'monospace', color: AppColors.textPrimary)),
-                                backgroundColor: AppColors.primary.withOpacity(0.08),
-                                side: BorderSide.none,
-                                visualDensity: VisualDensity.compact,
-                              ),
-                              Chip(
-                                avatar: const Icon(Icons.devices, size: 14, color: AppColors.switchNet),
-                                label: Text('${equipos.length} Equipos', style: const TextStyle(fontSize: 12, color: AppColors.textPrimary)),
-                                backgroundColor: AppColors.switchNet.withOpacity(0.08),
-                                side: BorderSide.none,
-                                visualDensity: VisualDensity.compact,
-                              ),
-                            ],
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12.0),
+                      decoration: BoxDecoration(
+                        color: esActiva ? AppColors.surface : AppColors.background,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
-                    ),
-                  );
-                },
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.hub_rounded,
+                                  color: esActiva ? AppColors.secondary : AppColors.textSecondary,
+                                  size: 24,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    red.nombre,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: esActiva ? AppColors.textPrimary : AppColors.textSecondary,
+                                      decoration: esActiva ? null : TextDecoration.lineThrough,
+                                    ),
+                                  ),
+                                ),
+                                InkWell(
+                                  onTap: () => _toggleEstadoRed(red),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: esActiva ? AppColors.statusActiveBg : AppColors.statusCriticalBg,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          esActiva ? Icons.check_circle : Icons.pause_circle_filled,
+                                          size: 13,
+                                          color: esActiva ? AppColors.statusActive : AppColors.statusCritical,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          red.estado,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: esActiva ? AppColors.statusActive : AppColors.statusCritical,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                IconButton(
+                                  constraints: const BoxConstraints(),
+                                  padding: const EdgeInsets.all(4),
+                                  icon: const Icon(Icons.edit_outlined, color: AppColors.secondary, size: 20),
+                                  onPressed: () => _abrirFormulario(red),
+                                ),
+                                IconButton(
+                                  constraints: const BoxConstraints(),
+                                  padding: const EdgeInsets.all(4),
+                                  icon: const Icon(Icons.delete_outline, color: AppColors.statusCritical, size: 20),
+                                  onPressed: () => _eliminarRed(red),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 6,
+                              children: [
+                                Chip(
+                                  avatar: const Icon(Icons.numbers, size: 14, color: AppColors.primary),
+                                  label: Text(red.segmento, style: const TextStyle(fontSize: 12, fontFamily: 'monospace', color: AppColors.textPrimary)),
+                                  backgroundColor: AppColors.primary.withOpacity(0.08),
+                                  side: BorderSide.none,
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                                Chip(
+                                  avatar: const Icon(Icons.devices, size: 14, color: AppColors.switchNet),
+                                  label: Text('${equipos.length} Equipos', style: const TextStyle(fontSize: 12, color: AppColors.textPrimary)),
+                                  backgroundColor: AppColors.switchNet.withOpacity(0.08),
+                                  side: BorderSide.none,
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
 
       floatingActionButton: FloatingActionButton.extended(
@@ -366,7 +370,6 @@ class _NetworksViewState extends State<NetworksView> {
   }
 }
 
-// --- FORMULARIO CON VALIDACIÓN DE MÁSCARA CIDR ---
 class _NetworkFormDialog extends StatefulWidget {
   final NetworkModel? red;
   final VoidCallback onSaved;
@@ -457,68 +460,71 @@ class _NetworkFormDialogState extends State<_NetworkFormDialog> {
           ),
         ],
       ),
-      content: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _nombreCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre de la Red (Ej. Red Administrativa)',
-                  prefixIcon: Icon(Icons.badge_outlined, color: AppColors.primary),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 500),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _nombreCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre de la Red (Ej. Red Administrativa)',
+                    prefixIcon: Icon(Icons.badge_outlined, color: AppColors.primary),
+                  ),
+                  validator: (val) => val == null || val.trim().isEmpty ? 'Ingrese un nombre' : null,
                 ),
-                validator: (val) => val == null || val.trim().isEmpty ? 'Ingrese un nombre' : null,
-              ),
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-              TextFormField(
-                controller: _segmentoCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Segmento CIDR (Ej. 192.168.1.0/24)',
-                  prefixIcon: Icon(Icons.alt_route_rounded, color: AppColors.primary),
+                TextFormField(
+                  controller: _segmentoCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Segmento CIDR (Ej. 192.168.1.0/24)',
+                    prefixIcon: Icon(Icons.alt_route_rounded, color: AppColors.primary),
+                  ),
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Ingrese el segmento CIDR';
+                    }
+
+                    final txt = val.trim();
+
+                    if (!txt.contains('/')) {
+                      return 'Debe incluir la máscara o prefijo CIDR (ej. /24)';
+                    }
+
+                    final cidrRegex = RegExp(
+                      r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(3[0-2]|[0-2]?[0-9])$',
+                    );
+
+                    if (!cidrRegex.hasMatch(txt)) {
+                      return 'Formato CIDR inválido (ej. 192.168.1.0/24)';
+                    }
+
+                    return null;
+                  },
                 ),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) {
-                    return 'Ingrese el segmento CIDR';
-                  }
+                const SizedBox(height: 12),
 
-                  final txt = val.trim();
-
-                  if (!txt.contains('/')) {
-                    return 'Debe incluir la máscara o prefijo CIDR (ej. /24)';
-                  }
-
-                  final cidrRegex = RegExp(
-                    r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(3[0-2]|[0-2]?[0-9])$',
-                  );
-
-                  if (!cidrRegex.hasMatch(txt)) {
-                    return 'Formato CIDR inválido (ej. 192.168.1.0/24)';
-                  }
-
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-
-              DropdownButtonFormField<String>(
-                isExpanded: true,
-                value: _selectedEstado,
-                decoration: const InputDecoration(
-                  labelText: 'Estado Operativo',
-                  prefixIcon: Icon(Icons.toggle_on_outlined, color: AppColors.primary),
+                DropdownButtonFormField<String>(
+                  isExpanded: true,
+                  value: _selectedEstado,
+                  decoration: const InputDecoration(
+                    labelText: 'Estado Operativo',
+                    prefixIcon: Icon(Icons.toggle_on_outlined, color: AppColors.primary),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'Activa', child: Text('Activa (En Producción)')),
+                    DropdownMenuItem(value: 'Inactiva', child: Text('Inactiva / Mantenimiento')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) setState(() => _selectedEstado = val);
+                  },
                 ),
-                items: const [
-                  DropdownMenuItem(value: 'Activa', child: Text('Activa (En Producción)')),
-                  DropdownMenuItem(value: 'Inactiva', child: Text('Inactiva / Mantenimiento')),
-                ],
-                onChanged: (val) {
-                  if (val != null) setState(() => _selectedEstado = val);
-                },
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

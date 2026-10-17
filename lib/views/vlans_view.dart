@@ -3,6 +3,7 @@ import '../core/app_colors.dart';
 import '../models/network_model.dart';
 import '../models/device_model.dart';
 import '../services/supabase_service.dart';
+import '../widgets/responsive_body.dart';
 
 class VlansView extends StatefulWidget {
   const VlansView({super.key});
@@ -154,8 +155,8 @@ class _VlansViewState extends State<VlansView> {
                 Text(isEditing ? 'Editar VLAN' : 'Nueva VLAN', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
               ],
             ),
-            content: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.9,
+            content: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 550),
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -379,277 +380,280 @@ class _VlansViewState extends State<VlansView> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchCtrl,
-              decoration: InputDecoration(
-                hintText: 'Buscar por ID, Nombre de VLAN o Descripción...',
-                prefixIcon: const Icon(Icons.search, color: AppColors.primary),
-                suffixIcon: _searchCtrl.text.isNotEmpty
-                    ? IconButton(
-                  icon: const Icon(Icons.clear, color: AppColors.textSecondary),
-                  onPressed: () => _searchCtrl.clear(),
-                )
-                    : null,
-                filled: true,
-                fillColor: AppColors.surface,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14.0),
-                  borderSide: const BorderSide(color: AppColors.border),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14.0),
-                  borderSide: const BorderSide(color: AppColors.border),
+      body: ResponsiveBody(
+        maxWidth: 950,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                controller: _searchCtrl,
+                decoration: InputDecoration(
+                  hintText: 'Buscar por ID, Nombre de VLAN o Descripción...',
+                  prefixIcon: const Icon(Icons.search, color: AppColors.primary),
+                  suffixIcon: _searchCtrl.text.isNotEmpty
+                      ? IconButton(
+                    icon: const Icon(Icons.clear, color: AppColors.textSecondary),
+                    onPressed: () => _searchCtrl.clear(),
+                  )
+                      : null,
+                  filled: true,
+                  fillColor: AppColors.surface,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14.0),
+                    borderSide: const BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14.0),
+                    borderSide: const BorderSide(color: AppColors.border),
+                  ),
                 ),
               ),
             ),
-          ),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-                : vlansFiltradas.isEmpty
-                ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.alt_route_rounded, size: 70, color: AppColors.textSecondary.withOpacity(0.5)),
-                  const SizedBox(height: 12),
-                  Text(
-                    _searchQuery.isEmpty
-                        ? 'No hay segmentaciones de VLAN registradas.'
-                        : 'No se encontraron coincidencias.',
-                    style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
-            )
-                : RefreshIndicator(
-              onRefresh: _cargarDatos,
-              color: AppColors.primary,
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                itemCount: vlansFiltradas.length,
-                itemBuilder: (context, index) {
-                  final vlan = vlansFiltradas[index];
-                  final vlanKey = (vlan['id'] ?? vlan['vlan_id']).toString();
-                  final isExpanded = _expandedVlanIds.contains(vlanKey);
-                  final redesAsignadas = _obtenerRedesDeVlan(vlan);
-                  final estadoVlan = vlan['estado']?.toString() ?? 'Activa';
-                  final esActiva = estadoVlan == 'Activa';
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12.0),
-                    decoration: BoxDecoration(
-                      color: esActiva ? AppColors.surface : AppColors.background,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                  : vlansFiltradas.isEmpty
+                  ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.alt_route_rounded, size: 70, color: AppColors.textSecondary.withOpacity(0.5)),
+                    const SizedBox(height: 12),
+                    Text(
+                      _searchQuery.isEmpty
+                          ? 'No hay segmentaciones de VLAN registradas.'
+                          : 'No se encontraron coincidencias.',
+                      style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
                     ),
-                    child: Column(
-                      children: [
-                        InkWell(
-                          onTap: () {
-                            setState(() {
-                              if (isExpanded) {
-                                _expandedVlanIds.remove(vlanKey);
-                              } else {
-                                _expandedVlanIds.add(vlanKey);
-                              }
-                            });
-                          },
-                          borderRadius: BorderRadius.circular(16),
-                          child: Padding(
-                            padding: const EdgeInsets.all(14.0),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: (esActiva ? AppColors.primary : AppColors.textSecondary).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'VLAN',
-                                        style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: esActiva ? AppColors.primary : AppColors.textSecondary),
-                                      ),
-                                      Text(
-                                        '${vlan['vlan_id'] ?? ''}',
-                                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: esActiva ? AppColors.primary : AppColors.textSecondary),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        vlan['nombre'] ?? 'S/N',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                          color: esActiva ? AppColors.textPrimary : AppColors.textSecondary,
-                                          decoration: esActiva ? null : TextDecoration.lineThrough,
+                  ],
+                ),
+              )
+                  : RefreshIndicator(
+                onRefresh: _cargarDatos,
+                color: AppColors.primary,
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                  itemCount: vlansFiltradas.length,
+                  itemBuilder: (context, index) {
+                    final vlan = vlansFiltradas[index];
+                    final vlanKey = (vlan['id'] ?? vlan['vlan_id']).toString();
+                    final isExpanded = _expandedVlanIds.contains(vlanKey);
+                    final redesAsignadas = _obtenerRedesDeVlan(vlan);
+                    final estadoVlan = vlan['estado']?.toString() ?? 'Activa';
+                    final esActiva = estadoVlan == 'Activa';
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12.0),
+                      decoration: BoxDecoration(
+                        color: esActiva ? AppColors.surface : AppColors.background,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              setState(() {
+                                if (isExpanded) {
+                                  _expandedVlanIds.remove(vlanKey);
+                                } else {
+                                  _expandedVlanIds.add(vlanKey);
+                                }
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(16),
+                            child: Padding(
+                              padding: const EdgeInsets.all(14.0),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: (esActiva ? AppColors.primary : AppColors.textSecondary).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          'VLAN',
+                                          style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: esActiva ? AppColors.primary : AppColors.textSecondary),
                                         ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        '${redesAsignadas.length} Red(es) vinculada(s)',
-                                        style: TextStyle(fontSize: 11, color: esActiva ? AppColors.primary : AppColors.textSecondary, fontWeight: FontWeight.w600),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    InkWell(
-                                      onTap: () => _toggleEstadoVlan(vlan),
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: esActiva ? AppColors.statusActiveBg : AppColors.statusWarningBg,
-                                          borderRadius: BorderRadius.circular(8),
+                                        Text(
+                                          '${vlan['vlan_id'] ?? ''}',
+                                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: esActiva ? AppColors.primary : AppColors.textSecondary),
                                         ),
-                                        child: Text(
-                                          estadoVlan,
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          vlan['nombre'] ?? 'S/N',
                                           style: TextStyle(
-                                            fontSize: 11,
                                             fontWeight: FontWeight.bold,
-                                            color: esActiva ? AppColors.statusActive : AppColors.statusWarning,
+                                            fontSize: 14,
+                                            color: esActiva ? AppColors.textPrimary : AppColors.textSecondary,
+                                            decoration: esActiva ? null : TextDecoration.lineThrough,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '${redesAsignadas.length} Red(es) vinculada(s)',
+                                          style: TextStyle(fontSize: 11, color: esActiva ? AppColors.primary : AppColors.textSecondary, fontWeight: FontWeight.w600),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      InkWell(
+                                        onTap: () => _toggleEstadoVlan(vlan),
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: esActiva ? AppColors.statusActiveBg : AppColors.statusWarningBg,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            estadoVlan,
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: esActiva ? AppColors.statusActive : AppColors.statusWarning,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    IconButton(
-                                      constraints: const BoxConstraints(),
-                                      padding: const EdgeInsets.all(4),
-                                      icon: const Icon(Icons.edit_outlined, color: AppColors.secondary, size: 20),
-                                      onPressed: () => _abrirFormularioVlan(vlan),
-                                    ),
-                                    IconButton(
-                                      constraints: const BoxConstraints(),
-                                      padding: const EdgeInsets.all(4),
-                                      icon: const Icon(Icons.delete_outline, color: AppColors.statusCritical, size: 20),
-                                      onPressed: () => _eliminarVlan(vlan),
-                                    ),
-                                    Icon(
-                                      isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                      const SizedBox(width: 6),
+                                      IconButton(
+                                        constraints: const BoxConstraints(),
+                                        padding: const EdgeInsets.all(4),
+                                        icon: const Icon(Icons.edit_outlined, color: AppColors.secondary, size: 20),
+                                        onPressed: () => _abrirFormularioVlan(vlan),
+                                      ),
+                                      IconButton(
+                                        constraints: const BoxConstraints(),
+                                        padding: const EdgeInsets.all(4),
+                                        icon: const Icon(Icons.delete_outline, color: AppColors.statusCritical, size: 20),
+                                        onPressed: () => _eliminarVlan(vlan),
+                                      ),
+                                      Icon(
+                                        isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
 
-                        if (isExpanded) ...[
-                          const Divider(height: 1, color: AppColors.border),
-                          Container(
-                            padding: const EdgeInsets.all(12.0),
-                            decoration: const BoxDecoration(
-                              color: AppColors.background,
-                              borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Redes asignadas a esta VLAN:',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                if (redesAsignadas.isEmpty)
-                                  const Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 8.0),
-                                    child: Text(
-                                      'No hay redes asociadas a esta VLAN.',
-                                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontStyle: FontStyle.italic),
+                          if (isExpanded) ...[
+                            const Divider(height: 1, color: AppColors.border),
+                            Container(
+                              padding: const EdgeInsets.all(12.0),
+                              decoration: const BoxDecoration(
+                                color: AppColors.background,
+                                borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Redes asignadas a esta VLAN:',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
                                     ),
-                                  )
-                                else
-                                  Column(
-                                    children: redesAsignadas.map((red) {
-                                      final numEquipos = _dispositivosDisponibles.where((d) => d.redId == red.id).length;
-
-                                      return Container(
-                                        margin: const EdgeInsets.only(bottom: 6.0),
-                                        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.surface,
-                                          borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(color: AppColors.border),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            const Icon(Icons.hub_outlined, color: AppColors.primary, size: 18),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    red.nombre,
-                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
-                                                  ),
-                                                  Text(
-                                                    red.segmento,
-                                                    style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: AppColors.textSecondary),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: AppColors.primary.withOpacity(0.08),
-                                                borderRadius: BorderRadius.circular(8),
-                                              ),
-                                              child: Text(
-                                                '$numEquipos equipos',
-                                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    }).toList(),
                                   ),
-                              ],
+                                  const SizedBox(height: 8),
+                                  if (redesAsignadas.isEmpty)
+                                    const Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                                      child: Text(
+                                        'No hay redes asociadas a esta VLAN.',
+                                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontStyle: FontStyle.italic),
+                                      ),
+                                    )
+                                  else
+                                    Column(
+                                      children: redesAsignadas.map((red) {
+                                        final numEquipos = _dispositivosDisponibles.where((d) => d.redId == red.id).length;
+
+                                        return Container(
+                                          margin: const EdgeInsets.only(bottom: 6.0),
+                                          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.surface,
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(color: AppColors.border),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              const Icon(Icons.hub_outlined, color: AppColors.primary, size: 18),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      red.nombre,
+                                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
+                                                    ),
+                                                    Text(
+                                                      red.segmento,
+                                                      style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: AppColors.textSecondary),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.primary.withOpacity(0.08),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  '$numEquipos equipos',
+                                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                ],
+                              ),
                             ),
-                          ),
+                          ],
                         ],
-                      ],
-                    ),
-                  );
-                },
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'btn_vlans_view_fab',

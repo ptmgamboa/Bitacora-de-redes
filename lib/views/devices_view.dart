@@ -6,6 +6,7 @@ import '../models/device_model.dart';
 import '../models/network_model.dart';
 import '../services/supabase_service.dart';
 import '../core/validators.dart';
+import '../widgets/responsive_body.dart';
 
 class DevicesView extends StatefulWidget {
   const DevicesView({super.key});
@@ -140,255 +141,258 @@ class _DevicesViewState extends State<DevicesView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchCtrl,
-              decoration: InputDecoration(
-                hintText: 'Buscar por IP, MAC, Nombre, Fabricante o Tipo...',
-                prefixIcon: const Icon(Icons.search, color: AppColors.primary),
-                suffixIcon: _searchCtrl.text.isNotEmpty
-                    ? IconButton(
-                  icon: const Icon(Icons.clear, color: AppColors.textSecondary),
-                  onPressed: () => _searchCtrl.clear(),
-                )
-                    : null,
-                filled: true,
-                fillColor: AppColors.surface,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14.0),
-                  borderSide: const BorderSide(color: AppColors.border),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14.0),
-                  borderSide: const BorderSide(color: AppColors.border),
+      body: ResponsiveBody(
+        maxWidth: 1000,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                controller: _searchCtrl,
+                decoration: InputDecoration(
+                  hintText: 'Buscar por IP, MAC, Nombre, Fabricante o Tipo...',
+                  prefixIcon: const Icon(Icons.search, color: AppColors.primary),
+                  suffixIcon: _searchCtrl.text.isNotEmpty
+                      ? IconButton(
+                    icon: const Icon(Icons.clear, color: AppColors.textSecondary),
+                    onPressed: () => _searchCtrl.clear(),
+                  )
+                      : null,
+                  filled: true,
+                  fillColor: AppColors.surface,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14.0),
+                    borderSide: const BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14.0),
+                    borderSide: const BorderSide(color: AppColors.border),
+                  ),
                 ),
               ),
             ),
-          ),
 
-          Expanded(
-            child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: _service.buscarDispositivos(_searchQuery),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
-                  );
-                }
+            Expanded(
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: _service.buscarDispositivos(_searchQuery),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: AppColors.primary),
+                    );
+                  }
 
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Text(
-                        'Error al cargar dispositivos: ${snapshot.error}',
-                        style: const TextStyle(color: AppColors.statusCritical),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  );
-                }
-
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.devices_other, size: 70, color: AppColors.textSecondary.withOpacity(0.5)),
-                        const SizedBox(height: 12),
-                        Text(
-                          _searchQuery.isEmpty
-                              ? 'No hay dispositivos registrados.'
-                              : 'No se encontraron coincidencias.',
-                          style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                final dispositivos = snapshot.data!.map((e) => DeviceModel.fromJson(e)).toList();
-
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                  itemCount: dispositivos.length,
-                  itemBuilder: (context, index) {
-                    final d = dispositivos[index];
-                    final redNombre = (d.redNombre != null && d.redNombre!.isNotEmpty)
-                        ? d.redNombre!
-                        : 'Sin Red';
-                    final resumen = d.resumenDetalles;
-
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12.0),
-                      decoration: BoxDecoration(
-                        color: d.esActivo ? AppColors.surface : AppColors.background,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
+                  if (snapshot.hasError) {
+                    return Center(
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: d.colorTipo.withOpacity(0.12),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                d.icono,
-                                color: d.colorTipo,
-                                size: 28,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          d.nombre,
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                            color: d.esActivo ? AppColors.textPrimary : AppColors.textSecondary,
-                                            decoration: d.esActivo ? null : TextDecoration.lineThrough,
-                                          ),
-                                        ),
-                                      ),
-                                      InkWell(
-                                        onTap: () => _toggleEstadoDispositivo(d),
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: _buildBadge(
-                                          icon: d.esActivo ? Icons.check_circle_rounded : Icons.pause_circle_filled_rounded,
-                                          text: d.esActivo ? 'ACTIVO' : 'INACTIVO',
-                                          bgColor: d.esActivo ? AppColors.statusActiveBg : AppColors.statusCriticalBg,
-                                          textColor: d.esActivo ? AppColors.statusActive : AppColors.statusCritical,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-
-                                  Wrap(
-                                    spacing: 6,
-                                    runSpacing: 6,
-                                    children: [
-                                      _buildBadge(
-                                        icon: d.icono,
-                                        text: d.tipoTexto,
-                                        bgColor: d.colorTipo.withOpacity(0.12),
-                                        textColor: d.colorTipo,
-                                      ),
-                                      _buildBadge(
-                                        icon: Icons.wifi,
-                                        text: d.ip,
-                                        bgColor: AppColors.primary.withOpacity(0.08),
-                                        textColor: AppColors.primary,
-                                      ),
-                                      _buildBadge(
-                                        icon: Icons.alt_route,
-                                        text: redNombre,
-                                        bgColor: AppColors.secondary.withOpacity(0.12),
-                                        textColor: AppColors.secondary,
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-
-                                  Text(
-                                    'MAC: ${d.mac}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.textSecondary,
-                                      fontFamily: 'monospace',
-                                    ),
-                                  ),
-                                  if (d.fabricante.isNotEmpty || d.ubicacion.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4.0),
-                                      child: Text(
-                                        '${d.fabricante}${d.fabricante.isNotEmpty && d.ubicacion.isNotEmpty ? ' • ' : ''}${d.ubicacion}',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                    ),
-                                  if (resumen.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4.0),
-                                      child: Text(
-                                        resumen,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-
-                            Column(
-                              children: [
-                                IconButton(
-                                  constraints: const BoxConstraints(),
-                                  padding: const EdgeInsets.all(6),
-                                  icon: Icon(
-                                    Icons.settings_ethernet_rounded,
-                                    color: d.esSwitch ? AppColors.primary : AppColors.textSecondary,
-                                    size: 22,
-                                  ),
-                                  tooltip: 'Configuración de Puertos / VLANs',
-                                  onPressed: () => _abrirConfiguracionPuertos(d),
-                                ),
-                                const SizedBox(height: 4),
-                                IconButton(
-                                  constraints: const BoxConstraints(),
-                                  padding: const EdgeInsets.all(6),
-                                  icon: const Icon(Icons.edit_outlined,
-                                      color: AppColors.secondary, size: 22),
-                                  onPressed: () => _abrirFormulario(d),
-                                ),
-                                const SizedBox(height: 4),
-                                IconButton(
-                                  constraints: const BoxConstraints(),
-                                  padding: const EdgeInsets.all(6),
-                                  icon: const Icon(Icons.delete_outline,
-                                      color: AppColors.statusCritical, size: 22),
-                                  onPressed: () => _eliminarDispositivo(d.id, d.nombre),
-                                ),
-                              ],
-                            ),
-                          ],
+                        child: Text(
+                          'Error al cargar dispositivos: ${snapshot.error}',
+                          style: const TextStyle(color: AppColors.statusCritical),
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     );
-                  },
-                );
-              },
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.devices_other, size: 70, color: AppColors.textSecondary.withOpacity(0.5)),
+                          const SizedBox(height: 12),
+                          Text(
+                            _searchQuery.isEmpty
+                                ? 'No hay dispositivos registrados.'
+                                : 'No se encontraron coincidencias.',
+                            style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  final dispositivos = snapshot.data!.map((e) => DeviceModel.fromJson(e)).toList();
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                    itemCount: dispositivos.length,
+                    itemBuilder: (context, index) {
+                      final d = dispositivos[index];
+                      final redNombre = (d.redNombre != null && d.redNombre!.isNotEmpty)
+                          ? d.redNombre!
+                          : 'Sin Red';
+                      final resumen = d.resumenDetalles;
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12.0),
+                        decoration: BoxDecoration(
+                          color: d.esActivo ? AppColors.surface : AppColors.background,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.border),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.03),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: d.colorTipo.withOpacity(0.12),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  d.icono,
+                                  color: d.colorTipo,
+                                  size: 28,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            d.nombre,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                              color: d.esActivo ? AppColors.textPrimary : AppColors.textSecondary,
+                                              decoration: d.esActivo ? null : TextDecoration.lineThrough,
+                                            ),
+                                          ),
+                                        ),
+                                        InkWell(
+                                          onTap: () => _toggleEstadoDispositivo(d),
+                                          borderRadius: BorderRadius.circular(8),
+                                          child: _buildBadge(
+                                            icon: d.esActivo ? Icons.check_circle_rounded : Icons.pause_circle_filled_rounded,
+                                            text: d.esActivo ? 'ACTIVO' : 'INACTIVO',
+                                            bgColor: d.esActivo ? AppColors.statusActiveBg : AppColors.statusCriticalBg,
+                                            textColor: d.esActivo ? AppColors.statusActive : AppColors.statusCritical,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 6,
+                                      children: [
+                                        _buildBadge(
+                                          icon: d.icono,
+                                          text: d.tipoTexto,
+                                          bgColor: d.colorTipo.withOpacity(0.12),
+                                          textColor: d.colorTipo,
+                                        ),
+                                        _buildBadge(
+                                          icon: Icons.wifi,
+                                          text: d.ip,
+                                          bgColor: AppColors.primary.withOpacity(0.08),
+                                          textColor: AppColors.primary,
+                                        ),
+                                        _buildBadge(
+                                          icon: Icons.alt_route,
+                                          text: redNombre,
+                                          bgColor: AppColors.secondary.withOpacity(0.12),
+                                          textColor: AppColors.secondary,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+
+                                    Text(
+                                      'MAC: ${d.mac}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.textSecondary,
+                                        fontFamily: 'monospace',
+                                      ),
+                                    ),
+                                    if (d.fabricante.isNotEmpty || d.ubicacion.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4.0),
+                                        child: Text(
+                                          '${d.fabricante}${d.fabricante.isNotEmpty && d.ubicacion.isNotEmpty ? ' • ' : ''}${d.ubicacion}',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ),
+                                    if (resumen.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4.0),
+                                        child: Text(
+                                          resumen,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+
+                              Column(
+                                children: [
+                                  IconButton(
+                                    constraints: const BoxConstraints(),
+                                    padding: const EdgeInsets.all(6),
+                                    icon: Icon(
+                                      Icons.settings_ethernet_rounded,
+                                      color: d.esSwitch ? AppColors.primary : AppColors.textSecondary,
+                                      size: 22,
+                                    ),
+                                    tooltip: 'Configuración de Puertos / VLANs',
+                                    onPressed: () => _abrirConfiguracionPuertos(d),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  IconButton(
+                                    constraints: const BoxConstraints(),
+                                    padding: const EdgeInsets.all(6),
+                                    icon: const Icon(Icons.edit_outlined,
+                                        color: AppColors.secondary, size: 22),
+                                    onPressed: () => _abrirFormulario(d),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  IconButton(
+                                    constraints: const BoxConstraints(),
+                                    padding: const EdgeInsets.all(6),
+                                    icon: const Icon(Icons.delete_outline,
+                                        color: AppColors.statusCritical, size: 22),
+                                    onPressed: () => _eliminarDispositivo(d.id, d.nombre),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
 
       floatingActionButton: FloatingActionButton.extended(
@@ -434,7 +438,6 @@ class _DevicesViewState extends State<DevicesView> {
   }
 }
 
-// --- MODAL DE CONFIGURACIÓN DE PUERTOS Y VLANS ---
 class _PortConfigModal extends StatefulWidget {
   final DeviceModel dispositivo;
 
@@ -523,328 +526,330 @@ class _PortConfigModalState extends State<_PortConfigModal> {
     final cfgActual = _configPuertos[_puertoSeleccionado] ?? {'vlan': 10, 'modo': 'Acceso'};
     final isTrunkActual = cfgActual['modo'] == 'Trunk';
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.88,
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.all(20.0),
-      child: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2),
+    return ResponsiveBody(
+      maxWidth: 750,
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.88,
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(20.0),
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+            : Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
-          Row(
-            children: [
-              const Icon(Icons.settings_ethernet, color: AppColors.primary, size: 26),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Puertos & VLANs - ${widget.dispositivo.nombre}',
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Text(
-                      'Gestión de puertos física y asignación VLAN',
-                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Capacidad del Switch:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: DropdownButton<int>(
-                  value: _totalPuertos,
-                  underline: const SizedBox(),
-                  isDense: true,
-                  items: const [8, 16, 24, 48].map((n) {
-                    return DropdownMenuItem(value: n, child: Text('$n Puertos', style: const TextStyle(fontSize: 13, color: AppColors.textPrimary)));
-                  }).toList(),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() {
-                        _inicializarPuertos(val);
-                      });
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          Expanded(
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                childAspectRatio: 1.25,
-              ),
-              itemCount: _totalPuertos,
-              itemBuilder: (context, index) {
-                final puerto = index + 1;
-                final cfg = _configPuertos[puerto] ?? {'vlan': 10, 'modo': 'Acceso'};
-                final isTrunk = cfg['modo'] == 'Trunk';
-                final isSelected = puerto == _puertoSeleccionado;
-
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _puertoSeleccionado = puerto;
-                    });
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primary.withOpacity(0.12)
-                          : (isTrunk ? AppColors.statusWarningBg : AppColors.background),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isSelected
-                            ? AppColors.primary
-                            : (isTrunk ? AppColors.statusWarning : AppColors.border),
-                        width: isSelected ? 2.5 : 1,
+            Row(
+              children: [
+                const Icon(Icons.settings_ethernet, color: AppColors.primary, size: 26),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Puertos & VLANs - ${widget.dispositivo.nombre}',
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.settings_input_component_rounded,
-                          size: 16,
+                      const Text(
+                        'Gestión de puertos física y asignación VLAN',
+                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Capacidad del Switch:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: DropdownButton<int>(
+                    value: _totalPuertos,
+                    underline: const SizedBox(),
+                    isDense: true,
+                    items: const [8, 16, 24, 48].map((n) {
+                      return DropdownMenuItem(value: n, child: Text('$n Puertos', style: const TextStyle(fontSize: 13, color: AppColors.textPrimary)));
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _inicializarPuertos(val);
+                        });
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            Expanded(
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 1.25,
+                ),
+                itemCount: _totalPuertos,
+                itemBuilder: (context, index) {
+                  final puerto = index + 1;
+                  final cfg = _configPuertos[puerto] ?? {'vlan': 10, 'modo': 'Acceso'};
+                  final isTrunk = cfg['modo'] == 'Trunk';
+                  final isSelected = puerto == _puertoSeleccionado;
+
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _puertoSeleccionado = puerto;
+                      });
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primary.withOpacity(0.12)
+                            : (isTrunk ? AppColors.statusWarningBg : AppColors.background),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
                           color: isSelected
                               ? AppColors.primary
-                              : (isTrunk ? AppColors.statusWarning : AppColors.textPrimary),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'P$puerto',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11,
-                            color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          isTrunk ? 'TRUNK' : 'VLAN ${cfg['vlan']}',
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: isTrunk ? AppColors.statusWarning : AppColors.secondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Configuración del Puerto P$_puertoSeleccionado',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isTrunkActual ? AppColors.statusWarningBg : AppColors.statusActiveBg,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        isTrunkActual ? 'Modo Troncal (Trunk)' : 'Modo Acceso',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: isTrunkActual ? AppColors.statusWarning : AppColors.statusActive,
+                              : (isTrunk ? AppColors.statusWarning : AppColors.border),
+                          width: isSelected ? 2.5 : 1,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          side: BorderSide(color: isTrunkActual ? AppColors.primary : AppColors.border),
-                        ),
-                        icon: Icon(
-                          isTrunkActual ? Icons.check_circle : Icons.swap_horiz,
-                          size: 16,
-                          color: isTrunkActual ? AppColors.primary : AppColors.textSecondary,
-                        ),
-                        label: Text(
-                          isTrunkActual ? 'Cambiar a Acceso' : 'Cambiar a Trunk',
-                          style: const TextStyle(fontSize: 11, color: AppColors.textPrimary),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            cfgActual['modo'] = isTrunkActual ? 'Acceso' : 'Trunk';
-                          });
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Row(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text('VLAN ID:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
-                              decoration: BoxDecoration(
-                                color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: AppColors.border),
-                              ),
-                              child: DropdownButton<int>(
-                                value: cfgActual['vlan'] as int,
-                                isExpanded: true,
-                                underline: const SizedBox(),
-                                isDense: true,
-                                items: [10, 20, 30, 40, 50, 100].map((vlanId) {
-                                  return DropdownMenuItem(
-                                    value: vlanId,
-                                    child: Text('VLAN $vlanId', style: const TextStyle(fontSize: 11, color: AppColors.textPrimary)),
-                                  );
-                                }).toList(),
-                                onChanged: isTrunkActual
-                                    ? null
-                                    : (val) {
-                                  if (val != null) {
-                                    setState(() {
-                                      cfgActual['vlan'] = val;
-                                    });
-                                  }
-                                },
-                              ),
+                          Icon(
+                            Icons.settings_input_component_rounded,
+                            size: 16,
+                            color: isSelected
+                                ? AppColors.primary
+                                : (isTrunk ? AppColors.statusWarning : AppColors.textPrimary),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'P$puerto',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                              color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            isTrunk ? 'TRUNK' : 'VLAN ${cfg['vlan']}',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: isTrunk ? AppColors.statusWarning : AppColors.secondary,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          SizedBox(
-            width: double.infinity,
-            height: 46,
-            child: _isSaving
-                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-                : ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () async {
-                setState(() => _isSaving = true);
-                try {
-                  final portsJson = {};
-                  _configPuertos.forEach((key, value) {
-                    portsJson[key.toString()] = value;
-                  });
-
-                  final payload = {
-                    'totalPuertos': _totalPuertos,
-                    'puertos': portsJson,
-                  };
-
-                  await Supabase.instance.client
-                      .from('dispositivos')
-                      .update({'config_puertos': payload})
-                      .eq('id', widget.dispositivo.id);
-
-                  await _service.registrarCambio(
-                    tipo: 'dispositivo',
-                    accion: 'editar',
-                    titulo: 'Puertos Configurados: ${widget.dispositivo.nombre}',
-                    detalle: 'Switch fijado a $_totalPuertos puertos. Puerto P$_puertoSeleccionado en VLAN ${cfgActual['vlan']} (${cfgActual['modo']}).',
                   );
-
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Configuración de $_totalPuertos puertos guardada'),
-                        backgroundColor: AppColors.statusActive,
-                      ),
-                    );
-                    Navigator.pop(context);
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error al guardar configuración: $e'),
-                        backgroundColor: AppColors.statusCritical,
-                      ),
-                    );
-                  }
-                } finally {
-                  if (mounted) setState(() => _isSaving = false);
-                }
-              },
-              child: const Text('Guardar Configuración'),
+                },
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 10),
+
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Configuración del Puerto P$_puertoSeleccionado',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isTrunkActual ? AppColors.statusWarningBg : AppColors.statusActiveBg,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          isTrunkActual ? 'Modo Troncal (Trunk)' : 'Modo Acceso',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: isTrunkActual ? AppColors.statusWarning : AppColors.statusActive,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            side: BorderSide(color: isTrunkActual ? AppColors.primary : AppColors.border),
+                          ),
+                          icon: Icon(
+                            isTrunkActual ? Icons.check_circle : Icons.swap_horiz,
+                            size: 16,
+                            color: isTrunkActual ? AppColors.primary : AppColors.textSecondary,
+                          ),
+                          label: Text(
+                            isTrunkActual ? 'Cambiar a Acceso' : 'Cambiar a Trunk',
+                            style: const TextStyle(fontSize: 11, color: AppColors.textPrimary),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              cfgActual['modo'] = isTrunkActual ? 'Acceso' : 'Trunk';
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            const Text('VLAN ID:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: DropdownButton<int>(
+                                  value: cfgActual['vlan'] as int,
+                                  isExpanded: true,
+                                  underline: const SizedBox(),
+                                  isDense: true,
+                                  items: [10, 20, 30, 40, 50, 100].map((vlanId) {
+                                    return DropdownMenuItem(
+                                      value: vlanId,
+                                      child: Text('VLAN $vlanId', style: const TextStyle(fontSize: 11, color: AppColors.textPrimary)),
+                                    );
+                                  }).toList(),
+                                  onChanged: isTrunkActual
+                                      ? null
+                                      : (val) {
+                                    if (val != null) {
+                                      setState(() {
+                                        cfgActual['vlan'] = val;
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            SizedBox(
+              width: double.infinity,
+              height: 46,
+              child: _isSaving
+                  ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                  : ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () async {
+                  setState(() => _isSaving = true);
+                  try {
+                    final portsJson = {};
+                    _configPuertos.forEach((key, value) {
+                      portsJson[key.toString()] = value;
+                    });
+
+                    final payload = {
+                      'totalPuertos': _totalPuertos,
+                      'puertos': portsJson,
+                    };
+
+                    await Supabase.instance.client
+                        .from('dispositivos')
+                        .update({'config_puertos': payload})
+                        .eq('id', widget.dispositivo.id);
+
+                    await _service.registrarCambio(
+                      tipo: 'dispositivo',
+                      accion: 'editar',
+                      titulo: 'Puertos Configurados: ${widget.dispositivo.nombre}',
+                      detalle: 'Switch fijado a $_totalPuertos puertos. Puerto P$_puertoSeleccionado en VLAN ${cfgActual['vlan']} (${cfgActual['modo']}).',
+                    );
+
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Configuración de $_totalPuertos puertos guardada'),
+                          backgroundColor: AppColors.statusActive,
+                        ),
+                      );
+                      Navigator.pop(context);
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error al guardar configuración: $e'),
+                          backgroundColor: AppColors.statusCritical,
+                        ),
+                      );
+                    }
+                  } finally {
+                    if (mounted) setState(() => _isSaving = false);
+                  }
+                },
+                child: const Text('Guardar Configuración'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-// --- FORMULARIO EMERGENTE DINÁMICO ---
 class _DeviceFormDialog extends StatefulWidget {
   final DeviceModel? dispositivo;
   final VoidCallback onSaved;
@@ -1173,149 +1178,147 @@ class _DeviceFormDialogState extends State<_DeviceFormDialog> {
           ),
         ],
       ),
-      content: SizedBox(
-        width: MediaQuery.of(context).size.width * 0.9,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.65,
-          ),
-          child: SingleChildScrollView(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 8),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 550,
+          maxHeight: MediaQuery.of(context).size.height * 0.65,
+        ),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 8),
 
-                  DropdownButtonFormField<String>(
-                    isExpanded: true,
-                    value: _selectedTipo,
-                    decoration: const InputDecoration(
-                      labelText: 'Tipo de Dispositivo',
-                      prefixIcon: Icon(Icons.category_outlined, color: AppColors.primary),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                    ),
-                    items: _tiposOpciones.map((item) {
-                      return DropdownMenuItem<String>(
-                        value: item['value'] as String,
-                        child: Row(
-                          children: [
-                            Icon(item['icon'] as IconData, size: 20, color: AppColors.primary),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                item['label'] as String,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(color: AppColors.textPrimary),
-                              ),
+                DropdownButtonFormField<String>(
+                  isExpanded: true,
+                  value: _selectedTipo,
+                  decoration: const InputDecoration(
+                    labelText: 'Tipo de Dispositivo',
+                    prefixIcon: Icon(Icons.category_outlined, color: AppColors.primary),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  ),
+                  items: _tiposOpciones.map((item) {
+                    return DropdownMenuItem<String>(
+                      value: item['value'] as String,
+                      child: Row(
+                        children: [
+                          Icon(item['icon'] as IconData, size: 20, color: AppColors.primary),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              item['label'] as String,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: AppColors.textPrimary),
                             ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedTipo = val);
-                    },
-                  ),
-                  const SizedBox(height: 12),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) setState(() => _selectedTipo = val);
+                  },
+                ),
+                const SizedBox(height: 12),
 
-                  DropdownButtonFormField<String>(
-                    isExpanded: true,
-                    value: _selectedEstado,
-                    decoration: const InputDecoration(
-                      labelText: 'Estado Operativo',
-                      prefixIcon: Icon(Icons.toggle_on_outlined, color: AppColors.primary),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 'Activo', child: Text('Activo (En Producción)', style: TextStyle(color: AppColors.textPrimary))),
-                      DropdownMenuItem(value: 'Inactivo', child: Text('Inactivo / Mantenimiento', style: TextStyle(color: AppColors.textPrimary))),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedEstado = val);
-                    },
+                DropdownButtonFormField<String>(
+                  isExpanded: true,
+                  value: _selectedEstado,
+                  decoration: const InputDecoration(
+                    labelText: 'Estado Operativo',
+                    prefixIcon: Icon(Icons.toggle_on_outlined, color: AppColors.primary),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   ),
-                  const SizedBox(height: 12),
+                  items: const [
+                    DropdownMenuItem(value: 'Activo', child: Text('Activo (En Producción)', style: TextStyle(color: AppColors.textPrimary))),
+                    DropdownMenuItem(value: 'Inactivo', child: Text('Inactivo / Mantenimiento', style: TextStyle(color: AppColors.textPrimary))),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) setState(() => _selectedEstado = val);
+                  },
+                ),
+                const SizedBox(height: 12),
 
-                  TextFormField(
-                    controller: _nombreCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Nombre (Ej. Router-Borde, SW-Core, PC-Admin)',
-                      prefixIcon: Icon(Icons.badge_outlined, color: AppColors.primary),
-                    ),
-                    validator: Validators.requerido,
+                TextFormField(
+                  controller: _nombreCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre (Ej. Router-Borde, SW-Core, PC-Admin)',
+                    prefixIcon: Icon(Icons.badge_outlined, color: AppColors.primary),
                   ),
-                  const SizedBox(height: 12),
+                  validator: Validators.requerido,
+                ),
+                const SizedBox(height: 12),
 
-                  TextFormField(
-                    controller: _ipCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Dirección IPv4',
-                      prefixIcon: Icon(Icons.numbers, color: AppColors.primary),
-                    ),
-                    validator: Validators.validarIPv4,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                TextFormField(
+                  controller: _ipCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Dirección IPv4',
+                    prefixIcon: Icon(Icons.numbers, color: AppColors.primary),
                   ),
-                  const SizedBox(height: 12),
+                  validator: Validators.validarIPv4,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                ),
+                const SizedBox(height: 12),
 
-                  TextFormField(
-                    controller: _macCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Dirección MAC (XX:XX:XX:XX:XX:XX)',
-                      prefixIcon: Icon(Icons.lan_outlined, color: AppColors.primary),
-                    ),
-                    validator: Validators.validarMAC,
-                    inputFormatters: [
-                      MacAddressFormatter(),
-                      LengthLimitingTextInputFormatter(17),
-                    ],
+                TextFormField(
+                  controller: _macCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Dirección MAC (XX:XX:XX:XX:XX:XX)',
+                    prefixIcon: Icon(Icons.lan_outlined, color: AppColors.primary),
                   ),
-                  const SizedBox(height: 12),
+                  validator: Validators.validarMAC,
+                  inputFormatters: [
+                    MacAddressFormatter(),
+                    LengthLimitingTextInputFormatter(17),
+                  ],
+                ),
+                const SizedBox(height: 12),
 
-                  TextFormField(
-                    controller: _fabCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Fabricante (Ej. Cisco, Mikrotik, HP, Dell, TP-Link)',
-                      prefixIcon: Icon(Icons.precision_manufacturing_outlined, color: AppColors.primary),
-                    ),
-                    validator: Validators.requerido,
+                TextFormField(
+                  controller: _fabCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Fabricante (Ej. Cisco, Mikrotik, HP, Dell, TP-Link)',
+                    prefixIcon: Icon(Icons.precision_manufacturing_outlined, color: AppColors.primary),
                   ),
-                  const SizedBox(height: 12),
+                  validator: Validators.requerido,
+                ),
+                const SizedBox(height: 12),
 
-                  TextFormField(
-                    controller: _ubicaCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Ubicación / Rack / Oficina',
-                      prefixIcon: Icon(Icons.place_outlined, color: AppColors.primary),
-                    ),
-                    validator: Validators.requerido,
+                TextFormField(
+                  controller: _ubicaCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Ubicación / Rack / Oficina',
+                    prefixIcon: Icon(Icons.place_outlined, color: AppColors.primary),
                   ),
-                  const SizedBox(height: 12),
+                  validator: Validators.requerido,
+                ),
+                const SizedBox(height: 12),
 
-                  DropdownButtonFormField<String>(
-                    isExpanded: true,
-                    value: _selectedRedId,
-                    decoration: const InputDecoration(
-                      labelText: 'Red Asociada',
-                      prefixIcon: Icon(Icons.router_outlined, color: AppColors.primary),
-                    ),
-                    items: _redesDisponibles.map((red) {
-                      return DropdownMenuItem(
-                        value: red.id,
-                        child: Text(
-                          '${red.nombre} (${red.segmento})',
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: AppColors.textPrimary),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (val) => setState(() => _selectedRedId = val),
-                    validator: (val) => val == null || val.isEmpty ? 'Seleccione una red' : null,
+                DropdownButtonFormField<String>(
+                  isExpanded: true,
+                  value: _selectedRedId,
+                  decoration: const InputDecoration(
+                    labelText: 'Red Asociada',
+                    prefixIcon: Icon(Icons.router_outlined, color: AppColors.primary),
                   ),
+                  items: _redesDisponibles.map((red) {
+                    return DropdownMenuItem(
+                      value: red.id,
+                      child: Text(
+                        '${red.nombre} (${red.segmento})',
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: AppColors.textPrimary),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) => setState(() => _selectedRedId = val),
+                  validator: (val) => val == null || val.isEmpty ? 'Seleccione una red' : null,
+                ),
 
-                  _buildCamposEspeciales(),
-                ],
-              ),
+                _buildCamposEspeciales(),
+              ],
             ),
           ),
         ),
