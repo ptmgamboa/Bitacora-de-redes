@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/app_colors.dart';
 import 'dashboard_view.dart';
 import 'networks_view.dart';
@@ -6,6 +7,7 @@ import 'devices_view.dart';
 import 'vlans_view.dart';
 import 'reports_view.dart';
 import 'profile_view.dart';
+import 'notifications_view.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -16,6 +18,7 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   int _selectedIndex = 0;
+  int _unreadNotifCount = 0;
 
   static const List<String> _titulos = <String>[
     'Inicio',
@@ -26,10 +29,34 @@ class _HomeViewState extends State<HomeView> {
     'Perfil',
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _cargarNotificacionesNoLeidas();
+  }
+
+  Future<void> _cargarNotificacionesNoLeidas() async {
+    try {
+      final res = await Supabase.instance.client
+          .from('notificaciones')
+          .select('id')
+          .eq('leida', false);
+
+      if (mounted) {
+        setState(() {
+          _unreadNotifCount = (res as List).length;
+        });
+      }
+    } catch (_) {
+      // Si no existe la tabla o falla la consulta, mantenemos en 0
+    }
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+    _cargarNotificacionesNoLeidas();
   }
 
   @override
@@ -52,12 +79,55 @@ class _HomeViewState extends State<HomeView> {
           _titulos[_selectedIndex],
           style: const TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontSize: 19,
           ),
         ),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        elevation: 1,
+        elevation: 0,
+        actions: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                tooltip: 'Ver Notificaciones',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const NotificationsView()),
+                  ).then((_) => _cargarNotificacionesNoLeidas());
+                },
+              ),
+              if (_unreadNotifCount > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: AppColors.statusCritical,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '$_unreadNotifCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 6),
+        ],
       ),
       body: IndexedStack(
         index: _selectedIndex,
@@ -74,17 +144,17 @@ class _HomeViewState extends State<HomeView> {
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
+            activeIcon: Icon(Icons.dashboard_rounded),
             label: 'Inicio',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.lan_outlined),
-            activeIcon: Icon(Icons.lan),
+            activeIcon: Icon(Icons.lan_rounded),
             label: 'Redes',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.devices_other_outlined),
-            activeIcon: Icon(Icons.devices_other),
+            activeIcon: Icon(Icons.devices_other_rounded),
             label: 'Dispositivos',
           ),
           BottomNavigationBarItem(
@@ -94,12 +164,12 @@ class _HomeViewState extends State<HomeView> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.assessment_outlined),
-            activeIcon: Icon(Icons.assessment),
+            activeIcon: Icon(Icons.assessment_rounded),
             label: 'Reportes',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
+            activeIcon: Icon(Icons.person_rounded),
             label: 'Perfil',
           ),
         ],

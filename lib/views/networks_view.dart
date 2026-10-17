@@ -329,14 +329,14 @@ class _NetworksViewState extends State<NetworksView> {
                             children: [
                               Chip(
                                 avatar: const Icon(Icons.numbers, size: 14, color: AppColors.primary),
-                                label: Text(red.segmento, style: const TextStyle(fontSize: 12, fontFamily: 'monospace')),
+                                label: Text(red.segmento, style: const TextStyle(fontSize: 12, fontFamily: 'monospace', color: AppColors.textPrimary)),
                                 backgroundColor: AppColors.primary.withOpacity(0.08),
                                 side: BorderSide.none,
                                 visualDensity: VisualDensity.compact,
                               ),
                               Chip(
                                 avatar: const Icon(Icons.devices, size: 14, color: AppColors.switchNet),
-                                label: Text('${equipos.length} Equipos', style: const TextStyle(fontSize: 12)),
+                                label: Text('${equipos.length} Equipos', style: const TextStyle(fontSize: 12, color: AppColors.textPrimary)),
                                 backgroundColor: AppColors.switchNet.withOpacity(0.08),
                                 side: BorderSide.none,
                                 visualDensity: VisualDensity.compact,
@@ -463,7 +463,6 @@ class _NetworkFormDialogState extends State<_NetworkFormDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // 1. NOMBRE DE LA RED
               TextFormField(
                 controller: _nombreCtrl,
                 decoration: const InputDecoration(
@@ -474,7 +473,6 @@ class _NetworkFormDialogState extends State<_NetworkFormDialog> {
               ),
               const SizedBox(height: 12),
 
-              // 2. SEGMENTACIÓN CON VALIDACIÓN DE MÁSCARA / PREFIJO CIDR
               TextFormField(
                 controller: _segmentoCtrl,
                 decoration: const InputDecoration(
@@ -492,7 +490,6 @@ class _NetworkFormDialogState extends State<_NetworkFormDialog> {
                     return 'Debe incluir la máscara o prefijo CIDR (ej. /24)';
                   }
 
-                  // Validación de formato IPv4 CIDR (Ej: 192.168.1.0/24)
                   final cidrRegex = RegExp(
                     r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(3[0-2]|[0-2]?[0-9])$',
                   );
@@ -506,7 +503,6 @@ class _NetworkFormDialogState extends State<_NetworkFormDialog> {
               ),
               const SizedBox(height: 12),
 
-              // 3. ESTADO (ACTIVO / INACTIVO)
               DropdownButtonFormField<String>(
                 isExpanded: true,
                 value: _selectedEstado,

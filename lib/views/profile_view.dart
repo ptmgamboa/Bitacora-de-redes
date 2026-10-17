@@ -8,13 +8,43 @@ import 'server_view.dart';
 import 'notifications_view.dart';
 import 'support_view.dart';
 
-class ProfileView extends StatelessWidget {
+class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
+
+  @override
+  State<ProfileView> createState() => _ProfileViewState();
+}
+
+class _ProfileViewState extends State<ProfileView> {
+  int _unreadNotifCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarNotificacionesNoLeidas();
+  }
+
+  Future<void> _cargarNotificacionesNoLeidas() async {
+    try {
+      final res = await Supabase.instance.client
+          .from('notificaciones')
+          .select('id')
+          .eq('leida', false);
+
+      if (mounted) {
+        setState(() {
+          _unreadNotifCount = (res as List).length;
+        });
+      }
+    } catch (_) {}
+  }
 
   Future<void> _cerrarSesion(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Cerrar Sesión'),
         content: const Text('¿Estás seguro de que deseas salir de la bitácora?'),
         actions: [
@@ -117,7 +147,10 @@ class ProfileView extends StatelessWidget {
             context,
             icon: Icons.notifications_none_rounded,
             title: 'Notificaciones de Alertas',
-            subtitle: 'Sistema activo',
+            subtitle: _unreadNotifCount > 0
+                ? '$_unreadNotifCount alerta(s) sin leer'
+                : 'Sistema al día',
+            badgeCount: _unreadNotifCount,
             targetPage: const NotificationsView(),
           ),
           _buildOptionCard(
@@ -158,6 +191,7 @@ class ProfileView extends StatelessWidget {
         required String title,
         required String subtitle,
         required Widget targetPage,
+        int badgeCount = 0,
       }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -175,11 +209,35 @@ class ProfileView extends StatelessWidget {
           ),
           child: Icon(icon, color: AppColors.primary, size: 22),
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textPrimary)),
         subtitle: Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-        trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (badgeCount > 0)
+              Container(
+                margin: const EdgeInsets.only(right: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.statusCritical,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$badgeCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+          ],
+        ),
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => targetPage));
+          Navigator.push(context, MaterialPageRoute(builder: (_) => targetPage)).then((_) {
+            _cargarNotificacionesNoLeidas();
+          });
         },
       ),
     );

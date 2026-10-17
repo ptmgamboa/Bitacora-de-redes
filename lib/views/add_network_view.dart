@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/app_colors.dart';
 
 class AddNetworkView extends StatefulWidget {
   const AddNetworkView({super.key});
@@ -29,14 +30,20 @@ class _AddNetworkViewState extends State<AddNetworkView> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Red "${_nameController.text}" registrada.')),
+          SnackBar(
+            content: Text('Red "${_nameController.text}" registrada.'),
+            backgroundColor: AppColors.statusActive,
+          ),
         );
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al registrar red: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error al registrar red: $e'),
+            backgroundColor: AppColors.statusCritical,
+          ),
         );
       }
     } finally {
@@ -47,81 +54,96 @@ class _AddNetworkViewState extends State<AddNetworkView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Agregar Nueva Red'),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Nombre de la Red',
-                hintText: 'Ej. Red_Sistemas_Uruapan',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.lan),
+        padding: const EdgeInsets.all(20.0),
+        child: Container(
+          padding: const EdgeInsets.all(20.0),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _gatewayController,
-              decoration: const InputDecoration(
-                labelText: 'Gateway IP',
-                hintText: 'Ej. 192.168.10.1',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.dns),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _typeController,
-              decoration: const InputDecoration(
-                labelText: 'Tipo de Red',
-                hintText: 'Ej. Wi-Fi Corporativo / Ethernet LAN',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.category),
-              ),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _status,
-              decoration: const InputDecoration(
-                labelText: 'Estado Inicial',
-                border: OutlineInputBorder(),
-              ),
-              items: const [
-                DropdownMenuItem(value: 'Activa', child: Text('Activa')),
-                DropdownMenuItem(value: 'Inactiva', child: Text('Inactiva')),
-                DropdownMenuItem(value: 'Mantenimiento', child: Text('Mantenimiento')),
-              ],
-              onChanged: (val) {
-                if (val != null) setState(() => _status = val);
-              },
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: _isLoading ? null : _addNetwork,
-                icon: _isLoading
-                    ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                )
-                    : const Icon(Icons.add),
-                label: Text(_isLoading ? 'Guardando...' : 'Registrar Red'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
-                  foregroundColor: Colors.white,
+            ],
+          ),
+          child: Column(
+            children: [
+              TextField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre de la Red',
+                  hintText: 'Ej. Red_Sistemas_Uruapan',
+                  prefixIcon: Icon(Icons.lan, color: AppColors.primary),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              TextField(
+                controller: _gatewayController,
+                decoration: const InputDecoration(
+                  labelText: 'Gateway IP',
+                  hintText: 'Ej. 192.168.10.1',
+                  prefixIcon: Icon(Icons.dns, color: AppColors.primary),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _typeController,
+                decoration: const InputDecoration(
+                  labelText: 'Tipo de Red',
+                  hintText: 'Ej. Wi-Fi Corporativo / Ethernet LAN',
+                  prefixIcon: Icon(Icons.category, color: AppColors.primary),
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _status,
+                decoration: const InputDecoration(
+                  labelText: 'Estado Inicial',
+                  prefixIcon: Icon(Icons.bar_chart, color: AppColors.primary),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'Activa', child: Text('Activa')),
+                  DropdownMenuItem(value: 'Inactiva', child: Text('Inactiva')),
+                  DropdownMenuItem(value: 'Mantenimiento', child: Text('Mantenimiento')),
+                ],
+                onChanged: (val) {
+                  if (val != null) setState(() => _status = val);
+                },
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: _isLoading ? null : _addNetwork,
+                  icon: _isLoading
+                      ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                  )
+                      : const Icon(Icons.add_rounded),
+                  label: Text(_isLoading ? 'Guardando...' : 'Registrar Red'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

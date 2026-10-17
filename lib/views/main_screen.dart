@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import '../core/app_colors.dart';
 import 'dashboard_view.dart';
 import 'networks_view.dart';
 import 'devices_view.dart';
-import 'reports_view.dart'; // 1. IMPORTAR LA VISTA DE REPORTES
+import 'reports_view.dart';
 import 'profile_view.dart';
 
 class MainScreen extends StatefulWidget {
@@ -19,14 +20,12 @@ class _MainScreenState extends State<MainScreen> {
     DashboardView(),
     NetworksView(),
     DevicesView(),
-    ReportsView(), // 2. AGREGAR A LA LISTA DE PANTALLAS
+    ReportsView(),
     ProfileView(),
   ];
 
   @override
   Widget build(BuildContext context) {
-    const purpleColor = Color(0xFF6A1B9A);
-
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
@@ -34,47 +33,47 @@ class _MainScreenState extends State<MainScreen> {
       ),
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
-          indicatorColor: const Color(0xFFE8DEF8),
-          backgroundColor: Colors.white,
+          indicatorColor: AppColors.primary.withOpacity(0.12),
+          backgroundColor: AppColors.surface,
           labelTextStyle: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
               return const TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: purpleColor,
+                color: AppColors.primary,
               );
             }
-            return const TextStyle(fontSize: 12, color: Colors.grey);
+            return const TextStyle(fontSize: 11, color: AppColors.textSecondary);
           }),
         ),
         child: NavigationBar(
           selectedIndex: _currentIndex,
+          elevation: 8,
           onDestinationSelected: (index) => setState(() => _currentIndex = index),
           destinations: const [
             NavigationDestination(
               icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home, color: purpleColor),
+              selectedIcon: Icon(Icons.home_rounded, color: AppColors.primary),
               label: 'Inicio',
             ),
             NavigationDestination(
               icon: Icon(Icons.hub_outlined),
-              selectedIcon: Icon(Icons.hub, color: purpleColor),
+              selectedIcon: Icon(Icons.hub_rounded, color: AppColors.primary),
               label: 'Redes',
             ),
             NavigationDestination(
               icon: Icon(Icons.devices_outlined),
-              selectedIcon: Icon(Icons.devices, color: purpleColor),
+              selectedIcon: Icon(Icons.devices_rounded, color: AppColors.primary),
               label: 'Dispositivos',
             ),
-            // 3. AGREGAR LA OPCIÓN EN LA BARRA DE NAVEGACIÓN
             NavigationDestination(
               icon: Icon(Icons.assessment_outlined),
-              selectedIcon: Icon(Icons.assessment, color: purpleColor),
+              selectedIcon: Icon(Icons.assessment_rounded, color: AppColors.primary),
               label: 'Reportes',
             ),
             NavigationDestination(
               icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person, color: purpleColor),
+              selectedIcon: Icon(Icons.person_rounded, color: AppColors.primary),
               label: 'Perfil',
             ),
           ],

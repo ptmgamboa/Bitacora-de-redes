@@ -33,7 +33,7 @@ class BitacoraApp extends StatelessWidget {
           surface: AppColors.surface,
         ),
 
-        // Estilo global para Tarjetas
+        // Tarjetas globales
         cardTheme: CardThemeData(
           color: AppColors.surface,
           elevation: 0,
@@ -44,7 +44,7 @@ class BitacoraApp extends StatelessWidget {
           ),
         ),
 
-        // Campos de Texto
+        // Campos de entrada estilizados
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: AppColors.surface,
@@ -65,7 +65,7 @@ class BitacoraApp extends StatelessWidget {
           labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
         ),
 
-        // Botones Primarios
+        // Botones primarios
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
@@ -79,20 +79,7 @@ class BitacoraApp extends StatelessWidget {
           ),
         ),
 
-        // Botones de Borde
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.primary,
-            minimumSize: const Size(double.infinity, 48),
-            side: const BorderSide(color: AppColors.primary, width: 1.5),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-            textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-          ),
-        ),
-
-        // Barra Inferior de Navegación
+        // Navegación Inferior
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
           backgroundColor: AppColors.surface,
           selectedItemColor: AppColors.primary,
@@ -103,7 +90,7 @@ class BitacoraApp extends StatelessWidget {
           elevation: 10,
         ),
 
-        // Barra Superior (AppBar)
+        // Barra Superior
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
