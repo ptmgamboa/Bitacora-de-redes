@@ -181,24 +181,27 @@ class _LoginViewState extends State<LoginView> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // LOGOTIPO BITACORA.NET
                     Container(
-                      padding: const EdgeInsets.all(18),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.secondary.withOpacity(0.3),
+                            color: Colors.black.withOpacity(0.15),
                             blurRadius: 20,
                             spreadRadius: 2,
                           ),
                         ],
                       ),
-                      child: const Icon(
-                        Icons.hub_rounded,
-                        size: 52,
-                        color: Colors.white,
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/images/Logo.png', // Corrección de mayúscula en 'Logo.png'
+                          width: 70,
+                          height: 70,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -345,7 +348,8 @@ class _LoginViewState extends State<LoginView> {
                                   : const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text('Acceder a la Bitácora', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                                  Text('Acceder a la Bitácora',
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                                   SizedBox(width: 8),
                                   Icon(Icons.arrow_forward_rounded, size: 20),
                                 ],
