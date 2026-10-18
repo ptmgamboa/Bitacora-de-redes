@@ -114,7 +114,9 @@ class _VlansViewState extends State<VlansView> {
   Future<void> _abrirFormularioVlan([Map<String, dynamic>? vlanTarget]) async {
     final redesData = await _service.getRedes();
     final redesList = redesData.map((e) => NetworkModel.fromJson(e)).toList();
-    setState(() => _redesDisponibles = redesList);
+    if (mounted) {
+      setState(() => _redesDisponibles = redesList);
+    }
 
     final isEditing = vlanTarget != null;
 
@@ -152,11 +154,14 @@ class _VlansViewState extends State<VlansView> {
               children: [
                 const Icon(Icons.alt_route_rounded, color: AppColors.primary),
                 const SizedBox(width: 8),
-                Text(isEditing ? 'Editar VLAN' : 'Nueva VLAN', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                Text(
+                  isEditing ? 'Editar VLAN' : 'Nueva VLAN',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                ),
               ],
             ),
-            content: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 550),
+            content: SizedBox(
+              width: 500,
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -189,22 +194,26 @@ class _VlansViewState extends State<VlansView> {
                     const SizedBox(height: 8),
 
                     Container(
-                      constraints: const BoxConstraints(maxHeight: 160),
+                      height: 160,
                       decoration: BoxDecoration(
                         border: Border.all(color: AppColors.border),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: _redesDisponibles.isEmpty
-                          ? const Padding(
-                        padding: EdgeInsets.all(12.0),
-                        child: Text(
-                          'No hay redes registradas para seleccionar.',
-                          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(12.0),
+                          child: Text(
+                            'No hay redes registradas para seleccionar.',
+                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          ),
                         ),
                       )
-                          : ListView(
-                        shrinkWrap: true,
-                        children: _redesDisponibles.map((r) {
+                          : ListView.builder(
+                        physics: const ClampingScrollPhysics(),
+                        itemCount: _redesDisponibles.length,
+                        itemBuilder: (context, index) {
+                          final r = _redesDisponibles[index];
                           final isSelected = selectedRedIds.contains(r.id);
                           return CheckboxListTile(
                             dense: true,
@@ -224,7 +233,7 @@ class _VlansViewState extends State<VlansView> {
                               });
                             },
                           );
-                        }).toList(),
+                        },
                       ),
                     ),
 
