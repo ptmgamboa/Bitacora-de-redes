@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart'; // Habilita la constante kIsWeb
 import 'package:flutter/material.dart';
 import '../core/app_colors.dart';
 import '../services/supabase_service.dart';
@@ -155,6 +156,151 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
+  // DIÁLOGO PARA REGISTRO DE NUEVO USUARIO (EXCLUSIVO WEB)
+  void _mostrarDialogoRegistro() {
+    final regEmailCtrl = TextEditingController();
+    final regPassCtrl = TextEditingController();
+    final regConfirmPassCtrl = TextEditingController();
+    final regFormKey = GlobalKey<FormState>();
+    bool isRegistering = false;
+    bool obscureRegPass = true;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            backgroundColor: AppColors.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Row(
+              children: [
+                Icon(Icons.person_add_rounded, color: AppColors.primary),
+                SizedBox(width: 10),
+                Text('Registrar Nuevo Usuario', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            content: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Form(
+                key: regFormKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Ingrese los datos para dar de alta una nueva cuenta en la plataforma.',
+                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: regEmailCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'Correo Electrónico',
+                        prefixIcon: Icon(Icons.email_outlined, color: AppColors.primary),
+                      ),
+                      validator: (val) =>
+                      val == null || val.trim().isEmpty ? 'Ingrese un correo' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: regPassCtrl,
+                      obscureText: obscureRegPass,
+                      decoration: InputDecoration(
+                        labelText: 'Contraseña',
+                        prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primary),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscureRegPass ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                            color: AppColors.textSecondary,
+                          ),
+                          onPressed: () => setDialogState(() => obscureRegPass = !obscureRegPass),
+                        ),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) return 'Ingrese una contraseña';
+                        if (val.length < 6) return 'Mínimo 6 caracteres';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: regConfirmPassCtrl,
+                      obscureText: obscureRegPass,
+                      decoration: const InputDecoration(
+                        labelText: 'Confirmar Contraseña',
+                        prefixIcon: Icon(Icons.lock_reset_rounded, color: AppColors.primary),
+                      ),
+                      validator: (val) {
+                        if (val != regPassCtrl.text) return 'Las contraseñas no coinciden';
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+              ),
+              isRegistering
+                  ? const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                ),
+              )
+                  : ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: () async {
+                  if (!regFormKey.currentState!.validate()) return;
+                  setDialogState(() => isRegistering = true);
+
+                  try {
+                    await SupabaseService().signUp(
+                      regEmailCtrl.text.trim(),
+                      regPassCtrl.text.trim(),
+                    );
+                    if (mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Usuario registrado correctamente'),
+                          backgroundColor: AppColors.statusActive,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    setDialogState(() => isRegistering = false);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error al registrar: $e'),
+                          backgroundColor: AppColors.statusCritical,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  }
+                },
+                child: const Text('Registrar'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -197,7 +343,7 @@ class _LoginViewState extends State<LoginView> {
                       ),
                       child: ClipOval(
                         child: Image.asset(
-                          'assets/images/Logo.png', // Corrección de mayúscula en 'Logo.png'
+                          'assets/images/Logo.png',
                           width: 70,
                           height: 70,
                           fit: BoxFit.contain,
@@ -322,6 +468,7 @@ class _LoginViewState extends State<LoginView> {
                           ),
                           const SizedBox(height: 18),
 
+                          // BOTÓN PRINCIPAL DE INICIO DE SESIÓN
                           SizedBox(
                             width: double.infinity,
                             height: 52,
@@ -356,6 +503,33 @@ class _LoginViewState extends State<LoginView> {
                               ),
                             ),
                           ),
+
+                          // BOTÓN SECUNDARIO PARA REGISTRAR USUARIO (SOLO VISIBLE EN WEB)
+                          if (kIsWeb) ...[
+                            const SizedBox(height: 14),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 50,
+                              child: OutlinedButton.icon(
+                                onPressed: _isLoading ? null : _mostrarDialogoRegistro,
+                                icon: const Icon(Icons.person_add_outlined, color: AppColors.primary),
+                                label: const Text(
+                                  'Registrar Nuevo Usuario',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: AppColors.primary, width: 1.5),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),

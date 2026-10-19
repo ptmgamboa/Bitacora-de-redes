@@ -34,3 +34,6 @@ flutter:
 
   assets:
     - assets/images/Logo.png
+dependency_overrides:
+  image: 4.0.17
+  archive: 3.6.1

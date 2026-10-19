@@ -9,6 +9,10 @@ class SupabaseService {
     await _supabase.auth.signInWithPassword(email: email, password: password);
   }
 
+  Future<void> signUp(String email, String password) async {
+    await _supabase.auth.signUp(email: email, password: password);
+  }
+
   Future<void> logout() async => await _supabase.auth.signOut();
 
   Future<void> resetPassword(String email) async {
